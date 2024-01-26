@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "fastapi-learning"
+version = "0.1.0"
+description = ""
+authors = ["mulchus <mulch@list.ru>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standart"], version = "^0.27.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
