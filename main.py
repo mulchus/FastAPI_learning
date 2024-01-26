@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import FastAPI, Path
 from pydantic import BaseModel, EmailStr
 
 
@@ -35,7 +36,7 @@ def add(items: Items):
 
 
 @app.post("/calc2/add/")
-def add(a: int, b: int):
+def add2(a: int, b: int):
     return {
         "a": a,
         "b": b,
@@ -43,8 +44,9 @@ def add(a: int, b: int):
     }
 
 
-@app.get("/calc3/add/")
-def add(a: int, b: int):
+@app.get("/calc3/add/{a} {b}")
+# def add3(a: int, b: int):
+def add3(a: Annotated[int, Path(ge=0, le=1_000)], b: Annotated[int, Path(ge=0, le=10)]):
     return {
         "a": a,
         "b": b,
