@@ -8,7 +8,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/")
 def create_user(user: User):
     return crud.create_user(user=user)
-    
+
 
 @router.get("-hello/")
 def hello(name: str = "World"):
