@@ -20,12 +20,15 @@ async def create_item(item: Item):
 
 
 @router.put("/update/{item_id}")
-async def update_item(item_id: int, item: Item):
+async def update_item(item_id: int, item: Item, q: str | None = None):
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
     if item.tax:
         item.price += item.tax
-    return {"item_id": item_id, **item.model_dump()}
+    result = {"item_id": item_id, **item.model_dump()}
+    if q:
+        result.update({"q": q[::-1]})
+    return result
 
 
 @router.get("/")
