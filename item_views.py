@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 
-router = APIRouter(prefix="/items")
+router = APIRouter()
 
 
 @router.get("/")
@@ -18,6 +18,6 @@ def read_last_item():
     return {"item_id": "latest"}
 
 
-@router.get("/{item_id}/")
-def read_item(item_id: int):
-    return {"item_id": item_id}
+@router.get("/{item_id}/")  # example: http://127.0.0.1:8000/items-new/1/?q=qwerty
+def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q} if q else {"item_id": item_id}
