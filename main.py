@@ -14,10 +14,21 @@ app.include_router(calc_router, tags=["calc"])
 app.include_router(item_router, prefix="/items-new", tags=["items-new"])
 
 
+fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
+
+
+@app.get("/items/")
+async def read_item(skip: int = 0, limit: int = 10, reverse: bool = False):
+    return (
+        fake_items_db[skip : skip + limit][::-1]
+        if reverse
+        else fake_items_db[skip : skip + limit]
+    )
+
+
 @app.get("/", name="hello123")
 async def start(args: str = "World"):
     names = [name.strip().title() for name in args.split()]
-    print(names)
     return {"message": f"Hello {', '.join(names)}"}
 
 
