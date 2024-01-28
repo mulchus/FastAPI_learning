@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, Path
 from pydantic import BaseModel
+from typing import Annotated
 
 
 router = APIRouter()
@@ -20,7 +21,11 @@ async def create_item(item: Item):
 
 
 @router.put("/update/{item_id}")
-async def update_item(item_id: int, item: Item, q: str | None = None):
+async def update_item(
+    item_id: Annotated[int, Path(ge=0, le=50)],
+    item: Item,
+    q: Annotated[str | None, Query(max_length=5)] = None,
+):
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
     if item.tax:
