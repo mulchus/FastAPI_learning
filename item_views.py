@@ -1,7 +1,31 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 
 router = APIRouter()
+
+
+class Item(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    tax: float | None = None
+
+
+@router.post("/post/")
+async def create_item(item: Item):
+    item.name = item.name.strip().title()
+    item.description = (item.description + ", ") * 3
+    return item
+
+
+@router.put("/update/{item_id}")
+async def update_item(item_id: int, item: Item):
+    item.name = item.name.strip().title()
+    item.description = ((item.description + ", ") * 5).rstrip(", ")
+    if item.tax:
+        item.price += item.tax
+    return {"item_id": item_id, **item.model_dump()}
 
 
 @router.get("/")
