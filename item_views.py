@@ -49,7 +49,15 @@ def list_items():
 
 
 @router.get("/latest/")
-def read_last_item(q: Annotated[list[str], Query()] = ("foo", "bar")):
+def read_last_item(
+    q: Annotated[
+        list[str],
+        Query(
+            title="Query string",
+            description="Query string for the items to search in the database that have a good match",
+        ),
+    ] = ("foo", "bar")
+):
     return {"item_id": "latest", "q": q}
 
 
