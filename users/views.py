@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
+from typing import Annotated
 from users.schemas import User
 from item_views import Item
 from users import crud
@@ -32,6 +33,11 @@ async def read_user_item(
 
 
 @router.put("/{item_id}")
-async def update_item(item_id: int, item: Item, user: User):
-    results = {"item_id": item_id, "item": item, "user": user}
+async def update_item(
+    item_id: int,
+    item: Item,
+    user: User,
+    importance: Annotated[int, Body()],
+):
+    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
     return results
