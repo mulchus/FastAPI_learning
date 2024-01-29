@@ -40,12 +40,13 @@ async def update_item(
 
 
 @router.get("/")
-def list_items():
-    return [
-        "item1",
-        "item2",
-        "item3",
-    ]
+def list_items(
+    q: Annotated[list[str], Query(alias="<item-query> instead <q>")] = (
+        "default",
+        "query",
+    )
+):
+    return [x for x in q] + ["string1", "string^"]
 
 
 @router.get("/latest/")
