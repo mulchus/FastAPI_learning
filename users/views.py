@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from users.schemas import User
+from item_views import Item
 from users import crud
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -28,3 +29,9 @@ async def read_user_item(
             {"description": "This is an amazing item that has a long description"}
         )
     return item
+
+
+@router.put("/{item_id}")
+async def update_item(item_id: int, item: Item, user: User):
+    results = {"item_id": item_id, "item": item, "user": user}
+    return results
