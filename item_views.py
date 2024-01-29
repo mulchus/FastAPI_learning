@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query, Path
 from pydantic import BaseModel
 from typing import Annotated
+import re
 
 
 router = APIRouter()
@@ -24,7 +25,9 @@ async def create_item(item: Item):
 async def update_item(
     item_id: Annotated[int, Path(ge=0, le=50)],
     item: Item,
-    q: Annotated[str | None, Query(max_length=5)] = None,
+    q: Annotated[
+        str | None, Query(max_length=15, min_length=3)
+    ] = None,  # regex="^fixedquery$"
 ):
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
@@ -51,7 +54,15 @@ def read_last_item():
 
 
 @router.get("/{item_id}/")  # example: http://127.0.0.1:8000/items-new/1/?q=qwerty
-def read_item(item_id: int, q: str | None = None):
+def read_item(
+    item_id: int,
+    q: Annotated[
+        str | None,
+        Query(
+            regex="[a-zA-Zйцуке][^0-9]123$",
+        ),
+    ] = None,
+):
     return {"item_id": item_id, "q": q} if q else {"item_id": item_id}
 
 
