@@ -18,10 +18,9 @@ def add(items: Items):
 
 @router.post("2/add/")
 def add2(
+    *,  # чтобы не показывало ошибку о порядке аргументов non-default parameter follows default parameter
+    a: Annotated[int, Query(include_in_schema=False)] = 10,  # не отображать в схеме
     b: int,
-    a: Annotated[
-        int, Query(include_in_schema=False)
-    ] = 10,  # не отображать в схеме + по умолчанию 10
 ):
     return {"a": a, "b": b, "sum": a + b}
 
