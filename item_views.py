@@ -26,7 +26,15 @@ async def update_item(
     item_id: Annotated[int, Path(ge=0, le=50)],
     item: Item,
     q: Annotated[
-        str | None, Query(max_length=15, min_length=3)
+        str | None,
+        Query(
+            title="Query string",
+            description="Query string for the items to search in the database that have a good match",
+            max_length=15,
+            min_length=3,
+            # regex="^fixedquery$",
+            deprecated=True,  # отметка, что параметр устарел
+        ),
     ] = None,  # regex="^fixedquery$"
 ):
     item.name = item.name.strip().title()
