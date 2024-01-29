@@ -49,8 +49,8 @@ def list_items():
 
 
 @router.get("/latest/")
-def read_last_item():
-    return {"item_id": "latest"}
+def read_last_item(q: Annotated[list[str], Query()] = ("foo", "bar")):
+    return {"item_id": "latest", "q": q}
 
 
 @router.get("/{item_id}/")  # example: http://127.0.0.1:8000/items-new/1/?q=qwerty
