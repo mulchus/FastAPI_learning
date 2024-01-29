@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Path
+from fastapi import APIRouter, Query, Path, Body
 from pydantic import BaseModel
 from typing import Annotated
 import re
@@ -45,6 +45,14 @@ async def update_item(
     if q:
         result.update({"q": q[::-1]})
     return result
+
+
+@router.put("/put/{item_id}")
+async def update_item(
+    item_id: int, item: Annotated[Item, Body(embed=True)]
+):  # в json добавлен главный уровень item
+    results = {"item_id": item_id, "item": item}
+    return results
 
 
 @router.get("/")
