@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Query, Path, Body
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated
 import re
 
 
 router = APIRouter()
+
+
+class Image(BaseModel):
+    url: HttpUrl
+    name: str
 
 
 class Item(BaseModel):
@@ -14,6 +19,21 @@ class Item(BaseModel):
     )
     price: float = Field(gt=0, description="The price must be greater than zero")
     tax: float | None = None
+    tags: set[str] = set()
+    image: list[Image] | None = None
+
+
+class Offer(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    items: list[Item]
+
+
+@router.post("/offers/")
+async def create_offer(offer: Offer):
+    offer.price = sum(item.price for item in offer.items)
+    return offer
 
 
 @router.post("/post/")
