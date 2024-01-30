@@ -36,6 +36,18 @@ async def create_offer(offer: Offer):
     return offer
 
 
+@router.post("/images/multiple/")
+async def create_multiple_images(images: list[Image]):
+    return images
+
+
+@router.post("/index-weights/")
+async def create_index_weights(
+    weights: dict[int, float]  # dict have "int" keys and float values
+):
+    return weights
+
+
 @router.post("/post/")
 async def create_item(item: Item):
     item.name = item.name.strip().title()
