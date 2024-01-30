@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Path, Body
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Annotated
 import re
 
@@ -9,8 +9,10 @@ router = APIRouter()
 
 class Item(BaseModel):
     name: str
-    description: str | None = None
-    price: float
+    description: str | None = Field(
+        default=None, title="The description of the item", max_length=15
+    )
+    price: float = Field(gt=0, description="The price must be greater than zero")
     tax: float | None = None
 
 
@@ -36,6 +38,23 @@ async def update_item(
             deprecated=True,  # отметка, что параметр устарел
         ),
     ] = None,  # regex="^fixedquery$"
+):
+    item.name = item.name.strip().title()
+    item.description = ((item.description + ", ") * 5).rstrip(", ")
+    if item.tax:
+        item.price += item.tax
+    result = {"item_id": item_id, **item.model_dump()}
+    if q:
+        result.update({"q": q[::-1]})
+    return result
+
+
+@router.put("/update2/{item_id}/")
+async def update_item_2(
+    item_id: int,
+    item: Annotated[Item, Body(embed=True)],  # в json добавлен главный уровень item
+    # item: Item,
+    q: str | None = None,
 ):
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
