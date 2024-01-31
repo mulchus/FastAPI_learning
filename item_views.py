@@ -15,10 +15,15 @@ class Image(BaseModel):
 class Item(BaseModel):
     name: str
     description: str | None = Field(
-        default=None, title="The description of the item", max_length=15
+        default=None,
+        title="The description of the item",
+        max_length=15,
+        examples=["Its a good item"],
     )
-    price: float = Field(gt=0, description="The price must be greater than zero")
-    tax: float | None = None
+    price: float = Field(
+        gt=0, description="The price must be greater than zero", examples=[35.4]
+    )
+    tax: float | None = Field(default=None, examples=[3.2])
     tags: set[str] = set()
     image: list[Image] | None = None
 
@@ -84,8 +89,55 @@ async def update_item(
 @router.put("/update2/{item_id}/")
 async def update_item_2(
     item_id: int,
-    item: Annotated[Item, Body(embed=True)],  # в json добавлен главный уровень item
-    # item: Item,
+    item: Annotated[
+        Item,
+        Body(
+            embed=True,  # в json добавлен главный уровень item
+            openapi_examples={
+                "normal": {
+                    "summary": "A normal example",
+                    "description": "A **normal** item works correctly.",
+                    "value": {
+                        "name": "Foo",
+                        "description": "A very nice Item",
+                        "price": 135.4,
+                        "tax": 3.2,
+                    },
+                },
+                "converted": {
+                    "summary": "An example with converted data",
+                    "description": "FastAPI can convert price `strings` to actual `numbers` automatically",
+                    "value": {
+                        "name": "Bar",
+                        "price": "35.4",
+                    },
+                },
+                "invalid": {
+                    "summary": "Invalid data is rejected with an error",
+                    "value": {
+                        "name": "Baz",
+                        "price": "thirty five point four",
+                    },
+                },
+            },
+            # examples=[
+            #     {
+            #         "name": "Foo",
+            #         "description": "A very nice Item",
+            #         "price": 55.5,
+            #         "tax": 3.2,
+            #     },
+            #     {
+            #         "name": "Bar",
+            #         "price": "35.4",
+            #     },
+            #     {
+            #         "name": "Baz",
+            #         "price": "thirty five point four",
+            #     },
+            # ],
+        ),
+    ],
     q: str | None = None,
 ):
     item.name = item.name.strip().title()
