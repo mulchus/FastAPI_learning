@@ -4,14 +4,17 @@ from fastapi import FastAPI
 
 from calc_views import router as calc_router
 from item_views import router as item_router
+from totem_views import router as totem_router
 from users.views import router as user_router
 from model_views import router as model_router
+
 
 app = FastAPI()
 app.include_router(user_router, tags=["users"])
 app.include_router(model_router, tags=["models"])
 app.include_router(calc_router, tags=["calc"])
 app.include_router(item_router, prefix="/items-new", tags=["items-new"])
+app.include_router(totem_router, tags=["totems"])
 
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
