@@ -22,21 +22,18 @@ app.include_router(totem_router, tags=["totems"])
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
 
-class UserIn(BaseModel):
+class BaseUser(BaseModel):
     username: str
+    email: EmailStr
+    full_name: str | None = None
+
+
+class UserIn(BaseUser):
     password: str
-    email: EmailStr
-    full_name: str | None = None
 
 
-class UserOut(BaseModel):
-    username: str
-    email: EmailStr
-    full_name: str | None = None
-
-
-@app.post("/user/", response_model=UserOut)
-async def create_user(user: UserIn) -> Any:
+@app.post("/user/")
+async def create_user(user: UserIn) -> BaseUser:
     return user
 
 
