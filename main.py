@@ -1,8 +1,9 @@
 import os.path
 
 from typing import Any
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel, EmailStr
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -20,6 +21,13 @@ app.include_router(totem_router, tags=["totems"])
 
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
+
+
+@app.get("/portal")
+async def get_portal(teleport: bool = False) -> Response:
+    if teleport:
+        return RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    return JSONResponse(content={"message": "Here's your interdimensional portal."})
 
 
 class BaseUser(BaseModel):
