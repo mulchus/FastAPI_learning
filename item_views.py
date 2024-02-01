@@ -1,6 +1,9 @@
+from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Query, Path, Body
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated
+from uuid import UUID
+
 import re
 
 
@@ -28,6 +31,27 @@ class Offer(BaseModel):
     description: str | None = None
     price: float
     items: list[Item]
+
+
+@router.put("/dates/{item_id}")
+async def read_items(
+    item_id: UUID,  # например 6ffefd8e-a018-e811-bbf9-60f67727d806
+    start_datetime: Annotated[datetime | None, Body()] = None,
+    end_datetime: Annotated[datetime | None, Body()] = None,
+    repeat_at: Annotated[time | None, Body()] = None,
+    process_after: Annotated[timedelta | None, Body()] = None,
+):
+    start_process = start_datetime + process_after
+    duration = end_datetime - start_process
+    return {
+        "item_id": item_id,
+        "start_datetime": start_datetime,
+        "end_datetime": end_datetime,
+        "repeat_at": repeat_at,
+        "process_after": process_after,
+        "start_process": start_process,
+        "duration": duration,
+    }
 
 
 @router.post("/offers/")
