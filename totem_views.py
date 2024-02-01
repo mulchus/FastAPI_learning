@@ -11,8 +11,22 @@ class Totem(BaseModel):
     name: str
     description: str | None = None
     price: float
-    tax: float | None = None
+    tax: float | None = 10.5  # default value
     tags: list[str] = []
+
+
+totems = {
+    "foo": {"name": "Foo", "price": 50.2},
+    "bar": {"name": "Bar", "description": "The bartenders", "price": 62, "tax": 20.2},
+    "baz": {"name": "Baz", "description": None, "price": 50.2, "tax": 10.5, "tags": []},
+}
+
+
+@router.get(
+    "/totems/{totem_id}", response_model=Totem, response_model_exclude_unset=True
+)
+async def read_totem2(totem_id: str):
+    return totems[totem_id]
 
 
 @router.get("/totems/", response_model=list[Totem])
