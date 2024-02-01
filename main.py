@@ -30,6 +30,13 @@ async def get_portal(teleport: bool = False) -> Response:
     return JSONResponse(content={"message": "Here's your interdimensional portal."})
 
 
+@app.get("/portal2", response_model=None)  # without Response type check
+async def get_portal(teleport: bool = False) -> Response | dict:
+    if teleport:
+        return RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    return {"message": "Here's your interdimensional portal."}
+
+
 class BaseUser(BaseModel):
     username: str
     email: EmailStr
