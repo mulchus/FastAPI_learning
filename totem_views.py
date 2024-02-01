@@ -15,8 +15,8 @@ class Totem(BaseModel):
     tags: list[str] = []
 
 
-@router.get("/totems/")
-async def read_totems() -> list[Totem]:
+@router.get("/totems/", response_model=list[Totem])
+async def read_totems():  # -> list[Totem]:
     return [
         Totem(name="Portal Gun", price=42.0),
         Totem(name="Plumbus", price=32.0),
@@ -24,7 +24,7 @@ async def read_totems() -> list[Totem]:
     # return {"success": True, "data": "Portal Gun"}  # raise exception ResponseValidationError
 
 
-@router.post("/totems/")
-async def create_totem(totem: Totem) -> Totem:
+@router.post("/totems/", response_model=Totem)
+async def create_totem(totem: Totem):  # -> Totem:
     return totem
     # return {"success": True, "data": totem}  # raise exception ResponseValidationError
