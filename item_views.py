@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from fastapi import APIRouter, Query, Path, Body
+from fastapi import APIRouter, Query, Path, Body, Header, Cookie
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated
 from uuid import UUID
@@ -190,6 +190,16 @@ def list_items(
     )
 ):
     return [x for x in q] + ["string1", "string^"]
+
+
+@router.get("/cookie/")
+async def read_cookie_items(ads_id: Annotated[str | None, Cookie()] = None):
+    return {"ads_id": ads_id}
+
+
+@router.get("/header/")
+async def read_header_items(user_agent: Annotated[str | None, Header()] = None):
+    return {"User-Agent": user_agent}
 
 
 @router.get("/latest/")
