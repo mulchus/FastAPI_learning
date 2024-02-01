@@ -23,7 +23,10 @@ totems = {
 
 
 @router.get(
-    "/totems/{totem_id}", response_model=Totem, response_model_exclude_unset=True
+    "/totems/{totem_id}",
+    response_model=Totem,
+    response_model_include={"name", "price", "description", "tags"},
+    response_model_exclude_unset=True,
 )
 async def read_totem2(totem_id: str):
     return totems[totem_id]
