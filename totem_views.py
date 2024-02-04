@@ -32,13 +32,38 @@ async def read_totem(totem_id: str):
     return totems[totem_id]
 
 
-@router.get("/totems/", response_model=list[Totem])
+new_totems = [
+    {"name": "Foo", "description": "The bartenders Foo", "price": 50.2},
+    {
+        "name": "Bar",
+        "description": "The bartenders Bar",
+        "price": 62,
+        "tax": 20.2,
+    },
+    {
+        "name": "Baz",
+        "description": "The bartenders Baz",
+        "price": 50.2,
+        "tax": 10.5,
+        "tags": [],
+    },
+]
+
+
+@router.get(
+    "/new-totems/",
+    response_model=list[Totem],
+    # response_model_include={"name", "description"},   # don't work
+    # response_model_exclude={"tax", "tags", "price"},  # don't work
+    response_model_exclude_unset=True,  # work
+)
 async def read_totems():  # -> list[Totem]:
-    return [
-        Totem(name="Portal Gun", price=42.0),
-        Totem(name="Plumbus", price=32.0),
-    ]
+    # return [
+    #     Totem(name="Portal Gun", price=42.0),
+    #     Totem(name="Plumbus", price=32.0),
+    # ]
     # return {"success": True, "data": "Portal Gun"}  # raise exception ResponseValidationError
+    return new_totems
 
 
 @router.post("/totems/", response_model=Totem)
