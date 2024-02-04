@@ -1,7 +1,7 @@
 import os.path
 
-from typing import Any
-from fastapi import FastAPI, Response, status
+from typing import Any, Annotated
+from fastapi import FastAPI, Response, status, Form
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -124,6 +124,11 @@ async def read_file_or_dir(file_path: str):
 )
 async def read_keyword_weights():
     return {"foo": 2.3, "bar": "3.4"}
+
+
+@app.post("/login/")
+async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    return {"username": username}
 
 
 if __name__ == "__main__":
