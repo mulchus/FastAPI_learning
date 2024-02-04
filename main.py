@@ -139,6 +139,19 @@ async def create_files(
     return {"file_sizes": [len(file) for file in files]}
 
 
+@app.post("/files2/")
+async def create_file(
+    file: Annotated[bytes, File()],
+    fileb: Annotated[UploadFile, File()],
+    token: Annotated[str, Form()],
+):
+    return {
+        "file_size": len(file),
+        "token": token,
+        "fileb_content_type": fileb.content_type,
+    }
+
+
 @app.post("/uploadfiles/")
 async def create_upload_files(
     # files: list[UploadFile]
@@ -155,6 +168,12 @@ async def main():
 <body>
 <form action="/files/" enctype="multipart/form-data" method="post">
 <input name="files" type="file" multiple>
+<input type="submit">
+</form>
+<form action="/files2/" enctype="multipart/form-data" method="post">
+<input name="file" type="file">
+<input name="fileb" type="file">
+<input name="token" type="text">
 <input type="submit">
 </form>
 <form action="/uploadfiles/" enctype="multipart/form-data" method="post">
