@@ -1,7 +1,7 @@
 from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Query, Path, Body, Header, Cookie
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Annotated
+from typing import Annotated, Union
 
 
 router = APIRouter()
@@ -28,7 +28,7 @@ totems = {
     response_model_include={"name", "price", "description", "tags"},
     response_model_exclude_unset=True,
 )
-async def read_totem2(totem_id: str):
+async def read_totem(totem_id: str):
     return totems[totem_id]
 
 
@@ -45,3 +45,32 @@ async def read_totems():  # -> list[Totem]:
 async def create_totem(totem: Totem):  # -> Totem:
     return totem
     # return {"success": True, "data": totem}  # raise exception ResponseValidationError
+
+
+class BaseTotem(BaseModel):
+    description: str
+    type: str
+
+
+class CarTotem(BaseTotem):
+    type: str = "car"
+
+
+class PlaneTotem(BaseTotem):
+    type: str = "plane"
+    size: int
+
+
+totems2 = {
+    "totem1": {"description": "All my friends drive a low rider", "type": "car"},
+    "totem2": {
+        "description": "Music is my aeroplane, it's my aeroplane",
+        "type": "plane",
+        "size": 5,
+    },
+}
+
+
+@router.get("/totems2/{totem_id}", response_model=Union[PlaneTotem, CarTotem])
+async def read_totem2_1(totem_id: str):
+    return totems2[totem_id]
