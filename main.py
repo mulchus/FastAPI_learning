@@ -1,7 +1,7 @@
 import os.path
 
 from typing import Any, Annotated
-from fastapi import FastAPI, Response, status, Form
+from fastapi import FastAPI, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -129,6 +129,16 @@ async def read_keyword_weights():
 @app.post("/login/")
 async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
     return {"username": username}
+
+
+@app.post("/files/")
+async def create_file(file: Annotated[bytes, File()]):
+    return {"file_size": len(file)}
+
+
+@app.post("/uploadfile/")
+async def create_upload_file(file: UploadFile):
+    return {"filename": file.filename}
 
 
 if __name__ == "__main__":
