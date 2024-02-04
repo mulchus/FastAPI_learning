@@ -1,7 +1,7 @@
 import os.path
 
 from typing import Any
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, status
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -116,7 +116,12 @@ async def read_file_or_dir(file_path: str):
         return {"file_path": file_path, "exists": False}
 
 
-@app.get("/keyword-weights/", response_model=dict[str, float])
+@app.get(
+    "/keyword-weights/",
+    response_model=dict[str, float],
+    status_code=status.HTTP_226_IM_USED,
+    response_description="Not Successful Response (Joke)",
+)
 async def read_keyword_weights():
     return {"foo": 2.3, "bar": "3.4"}
 
