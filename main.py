@@ -37,35 +37,38 @@ async def get_portal(teleport: bool = False) -> Response | dict:
     return {"message": "Here's your interdimensional portal."}
 
 
-# class BaseUser(BaseModel):
+# class UserIn(BaseModel):
+#     username: str
+#     password: str
+#     email: EmailStr
+#     full_name: str | None = None
+# class UserOut(BaseModel):
 #     username: str
 #     email: EmailStr
 #     full_name: str | None = None
-# class UserIn(BaseUser):
-#     password: str
-# @app.post("/user/")
-# async def create_user(user: UserIn) -> BaseUser:
-#     return user
+# class UserInDB(BaseModel):
+#     username: str
+#     hashed_password: str
+#     email: EmailStr
+#     full_name: str | None = None
 
 
-class UserIn(BaseModel):
+class UserBase(BaseModel):
     username: str
+    email: EmailStr
+    full_name: str | None = None
+
+
+class UserIn(UserBase):
     password: str
-    email: EmailStr
-    full_name: str | None = None
 
 
-class UserOut(BaseModel):
-    username: str
-    email: EmailStr
-    full_name: str | None = None
+class UserOut(UserBase):
+    pass
 
 
-class UserInDB(BaseModel):
-    username: str
+class UserInDB(UserBase):
     hashed_password: str
-    email: EmailStr
-    full_name: str | None = None
 
 
 def fake_password_hasher(raw_password: str):
