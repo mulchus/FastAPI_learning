@@ -3,7 +3,7 @@ import os.path
 from typing import Any, Annotated
 from fastapi import FastAPI, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -98,10 +98,10 @@ async def read_item(skip: int = 0, limit: int = 10, reverse: bool = False):
     )
 
 
-@app.get("/", name="hello123")
-async def start(args: str = "World"):
-    names = [name.strip().title() for name in args.split()]
-    return {"message": f"Hello {', '.join(names)}"}
+# @app.get("/", name="hello123")
+# async def start(args: str = "World"):
+#     names = [name.strip().title() for name in args.split()]
+#     return {"message": f"Hello {', '.join(names)}"}
 
 
 # получение информации из файла
@@ -132,13 +132,30 @@ async def login(username: Annotated[str, Form()], password: Annotated[str, Form(
 
 
 @app.post("/files/")
-async def create_file(file: Annotated[bytes, File()]):
-    return {"file_size": len(file)}
+async def create_files(files: Annotated[list[bytes], File()]):
+    return {"file_sizes": [len(file) for file in files]}
 
 
-@app.post("/uploadfile/")
-async def create_upload_file(file: UploadFile):
-    return {"filename": file.filename}
+@app.post("/uploadfiles/")
+async def create_upload_files(files: list[UploadFile]):
+    return {"filenames": [file.filename for file in files]}
+
+
+@app.get("/")
+async def main():
+    content = """
+<body>
+<form action="/files/" enctype="multipart/form-data" method="post">
+<input name="files" type="file" multiple>
+<input type="submit">
+</form>
+<form action="/uploadfiles/" enctype="multipart/form-data" method="post">
+<input name="files" type="file" multiple>
+<input type="submit">
+</form>
+</body>
+    """
+    return HTMLResponse(content=content)
 
 
 if __name__ == "__main__":
