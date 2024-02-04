@@ -116,6 +116,11 @@ async def read_file_or_dir(file_path: str):
         return {"file_path": file_path, "exists": False}
 
 
+@app.get("/keyword-weights/", response_model=dict[str, float])
+async def read_keyword_weights():
+    return {"foo": 2.3, "bar": "3.4"}
+
+
 if __name__ == "__main__":
     import uvicorn
 
