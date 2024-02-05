@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from fastapi import APIRouter, Query, Path, Body, Header, Cookie
+from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated, Union
 
@@ -29,6 +29,8 @@ totems = {
     response_model_exclude_unset=True,
 )
 async def read_totem(totem_id: str):
+    if totem_id not in totems:
+        raise HTTPException(status_code=404, detail="Totem not found")
     return totems[totem_id]
 
 
