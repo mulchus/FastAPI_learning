@@ -1,7 +1,7 @@
 import os.path
 
 from typing import Any, Annotated
-from fastapi import FastAPI, Response, status, Form, File, UploadFile
+from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 
@@ -18,7 +18,6 @@ app.include_router(model_router, tags=["models"])
 app.include_router(calc_router, tags=["calc"])
 app.include_router(item_router, prefix="/items-new", tags=["items-new"])
 app.include_router(totem_router, tags=["totems"])
-
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
@@ -183,6 +182,26 @@ async def main():
 </body>
     """
     return HTMLResponse(content=content)
+
+
+class UnicornException(Exception):
+    def __init__(self, name: str):
+        self.name = name
+
+
+@app.exception_handler(UnicornException)
+async def unicorn_exception_handler(request: Request, exc: UnicornException):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"Oops! {exc.name} did something. There goes a rainbow..."},
+    )
+
+
+@app.get("/unicorns/{name}")
+async def read_unicorn(name: str):
+    if name == "yolo":
+        raise UnicornException(name=name)
+    return {"unicorn_name": name}
 
 
 if __name__ == "__main__":
