@@ -30,7 +30,7 @@ totems = {
 )
 async def read_totem(totem_id: str):
     if totem_id not in totems:
-        raise HTTPException(status_code=404, detail="Totem not found")
+        raise HTTPException(status_code=404, detail={"message": "Totem not found"})
     return totems[totem_id]
 
 
