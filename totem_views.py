@@ -84,8 +84,15 @@ async def read_users():
     return ["Rick", "Morty"]
 
 
-@router.post("/totems/", response_model=Totem, status_code=status.HTTP_201_CREATED)
+@router.post("/totems/",
+             response_model=Totem,
+             status_code=status.HTTP_201_CREATED,
+             summary="Create a totem, yeah",
+             description="Create a totem with all the information,"
+                         " name, description, price, tax and a set of unique tags",
+             )
 async def create_totem(totem: Totem):  # -> Totem:
+    totem.price += totem.tax
     return totem
     # return {"success": True, "data": totem}  # raise exception ResponseValidationError
 
