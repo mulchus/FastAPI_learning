@@ -88,10 +88,19 @@ async def read_users():
              response_model=Totem,
              status_code=status.HTTP_201_CREATED,
              summary="Create a totem, yeah",
-             description="Create a totem with all the information,"
-                         " name, description, price, tax and a set of unique tags",
+             # description="Create a totem with all the information,"
+             #             " name, description, price, tax and a set of unique tags",
              )
 async def create_totem(totem: Totem):  # -> Totem:
+    """
+    Create a totem with all the information:
+
+    - **name**: each totem must have a name
+    - **description**: a long description
+    - **price**: required
+    - **tax**: if the item doesn't have tax, you can omit this
+    - **tags**: a set of unique tag strings for this totem
+    """
     totem.price += totem.tax
     return totem
     # return {"success": True, "data": totem}  # raise exception ResponseValidationError
