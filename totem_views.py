@@ -2,6 +2,7 @@ from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException, status
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated, Union
+from enum import Enum
 
 
 router = APIRouter()
@@ -66,6 +67,21 @@ async def read_totems():  # -> list[Totem]:
     # ]
     # return {"success": True, "data": "Portal Gun"}  # raise exception ResponseValidationError
     return new_totems
+
+
+class Tags(Enum):
+    totems = "totems"
+    users = "users"
+
+
+@router.get("/totems/", tags=[Tags.totems])
+async def get_totems():
+    return ["Portal gun", "Plumbus"]
+
+
+@router.get("/users/", tags=[Tags.users])
+async def read_users():
+    return ["Rick", "Morty"]
 
 
 @router.post("/totems/", response_model=Totem, status_code=status.HTTP_201_CREATED)
