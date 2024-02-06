@@ -1,5 +1,6 @@
 from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated, Union
 from enum import Enum
@@ -9,9 +10,9 @@ router = APIRouter()
 
 
 class Totem(BaseModel):
-    name: str
+    name: str | None = None
     description: str | None = None
-    price: float
+    price: float | None = None
     tax: float | None = 10.5  # default value
     tags: list[str] = []
 
@@ -32,6 +33,16 @@ totems = {
 async def read_totem(totem_id: str):
     if totem_id not in totems:
         raise HTTPException(status_code=404, detail={"message": "Totem not found"})
+    return totems[totem_id]
+
+
+@router.put("/totems3/{totem_id}", response_model=Totem)
+async def update_totem(totem_id: str, totem: Totem):
+    update_totem_encoded = jsonable_encoder(totem)
+    totems[totem_id] = update_totem_encoded
+    print(update_totem_encoded)
+    print(totems)
+    # return {"success": True, "data": totems}  # not return a dict because response_model = Totem
     return totems[totem_id]
 
 
@@ -85,13 +96,13 @@ async def read_users():
 
 
 @router.post("/totems/",
-             response_model=Totem,
-             status_code=status.HTTP_201_CREATED,
-             summary="Create a totem, yeah",
-             response_description="The created totem",
-             # description="Create a totem with all the information,"
-             #             " name, description, price, tax and a set of unique tags",
-             )
+    response_model=Totem,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a totem, yeah",
+    response_description="The created totem",
+    # description="Create a totem with all the information,"
+    #             " name, description, price, tax and a set of unique tags",
+)
 async def create_totem(totem: Totem):  # -> Totem:
     """
     Create a totem with all the information:
