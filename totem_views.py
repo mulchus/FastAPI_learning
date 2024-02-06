@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException
+from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException, status
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Annotated, Union
 
@@ -68,7 +68,7 @@ async def read_totems():  # -> list[Totem]:
     return new_totems
 
 
-@router.post("/totems/", response_model=Totem)
+@router.post("/totems/", response_model=Totem, status_code=status.HTTP_201_CREATED)
 async def create_totem(totem: Totem):  # -> Totem:
     return totem
     # return {"success": True, "data": totem}  # raise exception ResponseValidationError
