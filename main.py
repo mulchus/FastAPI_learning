@@ -3,7 +3,8 @@ import os.path
 from typing import Any, Annotated
 from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
-from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, PlainTextResponse
+from fastapi.exceptions import RequestValidationError, HTTPException
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -202,6 +203,18 @@ async def read_unicorn(name: str):
     if name == "yolo":
         raise UnicornException(name=name)
     return {"unicorn_name": name}
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return PlainTextResponse(str(exc), status_code=400)
+
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int):
+    if item_id == 3:
+        raise HTTPException(status_code=418, detail="Nope! I don't like 3.")
+    return {"item_id": item_id}
 
 
 if __name__ == "__main__":
