@@ -79,7 +79,7 @@ async def get_totems():
     return ["Portal gun", "Plumbus"]
 
 
-@router.get("/users/", tags=[Tags.users])
+@router.get("/users/", tags=[Tags.users], deprecated=True)
 async def read_users():
     return ["Rick", "Morty"]
 
