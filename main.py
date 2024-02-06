@@ -3,15 +3,26 @@ import os.path
 from typing import Any, Annotated
 from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
-from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, PlainTextResponse
-from fastapi.exceptions import RequestValidationError   # , HTTPException as StarletteHTTPException
+from fastapi.responses import (
+    JSONResponse,
+    RedirectResponse,
+    HTMLResponse,
+    PlainTextResponse,
+)
+from fastapi.exceptions import (
+    RequestValidationError,
+)  # , HTTPException as StarletteHTTPException
 from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exception_handlers import (http_exception_handler, request_validation_exception_handler)
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 
 from calc_views import router as calc_router
 from item_views import router as item_router
 from totem_views import router as totem_router
+from sotem_views import router as sotem_router
 from users.views import router as user_router
 from model_views import router as model_router
 
@@ -22,6 +33,7 @@ app.include_router(model_router, tags=["models"])
 app.include_router(calc_router, tags=["calc"])
 app.include_router(item_router, prefix="/items-new", tags=["items-new"])
 app.include_router(totem_router, tags=["totems"])
+app.include_router(sotem_router, tags=["sotems"])
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
