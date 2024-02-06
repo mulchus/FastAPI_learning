@@ -88,6 +88,7 @@ async def read_users():
              response_model=Totem,
              status_code=status.HTTP_201_CREATED,
              summary="Create a totem, yeah",
+             response_description="The created totem",
              # description="Create a totem with all the information,"
              #             " name, description, price, tax and a set of unique tags",
              )
