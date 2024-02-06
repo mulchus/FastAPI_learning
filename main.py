@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, PlainTextResponse
 from fastapi.exceptions import RequestValidationError, HTTPException as StarletteHTTPException
+from fastapi.encoders import jsonable_encoder
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -221,6 +222,24 @@ async def read_item(item_id: int):
         # raise HTTPException(status_code=418, detail="Nope! I don't like 3.")
         raise StarletteHTTPException(status_code=418, detail="Nope! I don't like 3.")
     return {"item_id": item_id}
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
+    )
+
+
+class Item(BaseModel):
+    title: str
+    size: int
+
+
+@app.post("/items/")
+async def create_item(item: Item):
+    return item
 
 
 if __name__ == "__main__":
