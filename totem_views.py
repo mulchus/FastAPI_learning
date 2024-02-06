@@ -46,6 +46,16 @@ async def update_totem(totem_id: str, totem: Totem):
     return totems[totem_id]
 
 
+@router.patch("/totems4/{totem_id}", response_model=Totem)
+async def update_totem4(totem_id: str, totem: Totem):
+    stored_totem_data = totems[totem_id]
+    stored_totem_model = Totem(**stored_totem_data)
+    update_data = totem.dict(exclude_unset=True)
+    updated_totem = stored_totem_model.copy(update=update_data)
+    totems[totem_id] = jsonable_encoder(updated_totem)
+    return updated_totem
+
+
 new_totems = [
     {"name": "Foo", "description": "The bartenders Foo", "price": 50.2},
     {
@@ -95,7 +105,8 @@ async def read_users():
     return ["Rick", "Morty"]
 
 
-@router.post("/totems/",
+@router.post(
+    "/totems/",
     response_model=Totem,
     status_code=status.HTTP_201_CREATED,
     summary="Create a totem, yeah",
