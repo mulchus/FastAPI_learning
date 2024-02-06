@@ -4,8 +4,10 @@ from typing import Any, Annotated
 from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, PlainTextResponse
-from fastapi.exceptions import RequestValidationError, HTTPException as StarletteHTTPException
+from fastapi.exceptions import RequestValidationError   # , HTTPException as StarletteHTTPException
 from fastapi.encoders import jsonable_encoder
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exception_handlers import (http_exception_handler, request_validation_exception_handler)
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -206,14 +208,26 @@ async def read_unicorn(name: str):
     return {"unicorn_name": name}
 
 
+# @app.exception_handler(StarletteHTTPException)
+# async def http_exception_handler(request, exc):
+#     return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+#
+#
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request, exc):
+#     return PlainTextResponse(str(exc), status_code=400)
+
+
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request, exc):
-    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+async def custom_http_exception_handler(request, exc):
+    print(f"OMG! An HTTP error!: {repr(exc)}")
+    return await http_exception_handler(request, exc)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    return PlainTextResponse(str(exc), status_code=400)
+    print(f"OMG! The client sent invalid data!: {exc}")
+    return await request_validation_exception_handler(request, exc)
 
 
 @app.get("/items/{item_id}")
