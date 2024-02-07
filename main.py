@@ -40,6 +40,18 @@ from users.views import router as user_router
 from model_views import router as model_router
 
 
+async def verify_token(x_token: Annotated[str, Header()]):
+    if x_token != "fake-super-secret-token":
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+
+
+async def verify_key(x_key: Annotated[str, Header()]):
+    if x_key != "fake-super-secret-key":
+        raise HTTPException(status_code=400, detail="X-Key header invalid")
+    return x_key
+
+
+# app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI()
 app.include_router(user_router, tags=["users"])
 app.include_router(model_router, tags=["models"])
@@ -85,17 +97,6 @@ async def read_items(commons: Annotated[CommonQueryParams, Depends()]):
 # # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
 # async def read_items(commons: CommonsDep):
 #     return commons
-
-
-async def verify_token(x_token: Annotated[str, Header()]):
-    if x_token != "fake-super-secret-token":
-        raise HTTPException(status_code=400, detail="X-Token header invalid")
-
-
-async def verify_key(x_key: Annotated[str, Header()]):
-    if x_key != "fake-super-secret-key":
-        raise HTTPException(status_code=400, detail="X-Key header invalid")
-    return x_key
 
 
 @app.get("/items-path-dep/", dependencies=[Depends(verify_token), Depends(verify_key)])
