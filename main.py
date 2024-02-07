@@ -2,7 +2,19 @@ import os.path
 import asyncio
 
 from typing import Any, Annotated
-from fastapi import FastAPI, Request, Response, status, Form, File, UploadFile, Depends
+from fastapi import (
+    FastAPI,
+    Request,
+    Response,
+    status,
+    Form,
+    File,
+    UploadFile,
+    Depends,
+    HTTPException,
+    Header,
+    Query,
+)
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import (
     JSONResponse,
@@ -73,6 +85,22 @@ async def read_items(commons: Annotated[CommonQueryParams, Depends()]):
 # # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
 # async def read_items(commons: CommonsDep):
 #     return commons
+
+
+async def verify_token(x_token: Annotated[str, Header()]):
+    if x_token != "fake-super-secret-token":
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+
+
+async def verify_key(x_key: Annotated[str, Header()]):
+    if x_key != "fake-super-secret-key":
+        raise HTTPException(status_code=400, detail="X-Key header invalid")
+    return x_key
+
+
+@app.get("/items-path-dep/", dependencies=[Depends(verify_token), Depends(verify_key)])
+async def read_items_path_dep():
+    return [{"item": "Foo"}, {"item": "Bar"}]
 
 
 @app.get("/portal")
