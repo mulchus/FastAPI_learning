@@ -31,6 +31,7 @@ from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
 )
+from fastapi.security import OAuth2PasswordBearer
 
 from calc_views import router as calc_router
 from item_views import router as item_router
@@ -38,6 +39,7 @@ from totem_views import router as totem_router
 from sotem_views import router as sotem_router
 from users.views import router as user_router
 from model_views import router as model_router
+
 
 
 async def verify_token(x_token: Annotated[str, Header()]):
@@ -50,6 +52,8 @@ async def verify_key(x_key: Annotated[str, Header()]):
         raise HTTPException(status_code=400, detail="X-Key header invalid")
     return x_key
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI()
@@ -359,6 +363,11 @@ class Item(BaseModel):
 @app.post("/items/")
 async def create_item(item: Item):
     return item
+
+
+@app.get("/items-auth/")
+async def read_items_with_auth(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
 
 
 if __name__ == "__main__":
