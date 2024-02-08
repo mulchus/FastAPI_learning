@@ -1,5 +1,4 @@
 import os.path
-import asyncio
 
 from typing import Any, Annotated
 from fastapi import (
@@ -39,7 +38,7 @@ from totem_views import router as totem_router
 from sotem_views import router as sotem_router
 from users.views import router as user_router
 from model_views import router as model_router
-
+from security_views import router as security_router
 
 
 async def verify_token(x_token: Annotated[str, Header()]):
@@ -53,8 +52,6 @@ async def verify_key(x_key: Annotated[str, Header()]):
     return x_key
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI()
 app.include_router(user_router, tags=["users"])
@@ -63,6 +60,7 @@ app.include_router(calc_router, tags=["calc"])
 app.include_router(item_router, prefix="/items-new", tags=["items-new"])
 app.include_router(totem_router, tags=["totems"])
 app.include_router(sotem_router, tags=["sotems"])
+app.include_router(security_router, tags=["security"])
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
@@ -363,11 +361,6 @@ class Item(BaseModel):
 @app.post("/items/")
 async def create_item(item: Item):
     return item
-
-
-@app.get("/items-auth/")
-async def read_items_with_auth(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
 
 
 if __name__ == "__main__":
