@@ -25,34 +25,6 @@ async def view_item_class(item: FirstItem):
     return item
 
 
-class Image(BaseModel):
-    url: HttpUrl
-    name: str
-
-
-class Item(BaseModel):
-    name: str
-    description: str | None = Field(
-        default=None,
-        title="The description of the item",
-        max_length=15,
-        examples=["Its a good item"],
-    )
-    price: float = Field(
-        gt=0, description="The price must be greater than zero", examples=[35.4]
-    )
-    tax: float | None = Field(default=None, examples=[3.2])
-    tags: set[str] = set()
-    image: list[Image] | None = None
-
-
-class Offer(BaseModel):
-    name: str
-    description: str | None = None
-    price: float
-    items: list[Item]
-
-
 @router.put("/dates/{item_id}")
 async def read_items(
     item_id: UUID,  # например 6ffefd8e-a018-e811-bbf9-60f67727d806
@@ -74,7 +46,51 @@ async def read_items(
     }
 
 
+class Image(BaseModel):
+    url: HttpUrl
+    name: str
+
+
+class Item(BaseModel):
+    name: str
+    description: str | None = Field(
+        default=None,
+        title="The description of the item",
+        max_length=15,
+        examples=["Its a good item"],
+    )
+    price: float = Field(
+        gt=0, description="The price must be greater than zero", examples=[35.4]
+    )
+    tax: float | None = Field(default=None, examples=[3.2])
+    tags: set[str] = set()
+    image: list[Image] | None = None
+
+    model_config = {"extra": "forbid"}  # запретить иные кроме печечисленных
+
+
+class Offer(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    items: list[Item]
+
+
+class ShortOffers(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+
+
 @router.post("/offers/")
+async def create_offer(offer: Offer) -> Offer:
+    offer.price = sum(item.price for item in offer.items)
+    rez_offer = offer.model_dump()
+    rez_offer['extra'] = 'extra_field'  # this field ignore in return
+    return rez_offer
+
+
+@router.post("/short_offers_info/", response_model=ShortOffers)
 async def create_offer(offer: Offer):
     offer.price = sum(item.price for item in offer.items)
     return offer
