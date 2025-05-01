@@ -1,4 +1,5 @@
 import os.path
+import time
 from enum import Enum
 
 from typing import Any, Annotated
@@ -66,6 +67,15 @@ app.include_router(security_router, tags=["security"])
 # # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
 # async def read_items(commons: CommonsDep):
 #     return commons
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 
 @app.get("/portal")
