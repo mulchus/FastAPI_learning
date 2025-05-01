@@ -56,8 +56,8 @@ class Offer(BaseModel):
 @router.put("/dates/{item_id}")
 async def read_items(
     item_id: UUID,  # например 6ffefd8e-a018-e811-bbf9-60f67727d806
-    start_datetime: Annotated[datetime | None, Body()] = None,
-    end_datetime: Annotated[datetime | None, Body()] = None,
+    start_datetime: Annotated[datetime, Query()],
+    end_datetime: Annotated[datetime, Body()],
     repeat_at: Annotated[time | None, Body()] = None,
     process_after: Annotated[timedelta | None, Body()] = None,
 ):

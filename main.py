@@ -14,6 +14,7 @@ from fastapi import (
     HTTPException,
     Header,
     Query,
+    Path,
 )
 from pydantic import BaseModel, EmailStr
 from fastapi.responses import (
@@ -233,10 +234,12 @@ async def root():
 
 
 @app.get("/hellow/{name}")
-async def read_unicorn(name: str):
+async def read_unicorn(
+        name: Annotated[str, Path(regex="[a-zA-Zа-яА-Я]$")],
+):
     if not isinstance(name, str):
         raise UnicornException(name=name)
-    return {"unicorn_name": name}
+    return {"massage": f"Hellow, {name.title()}"}
 
 
 class ModelName(str, Enum):
