@@ -1,4 +1,5 @@
 import os.path
+from enum import Enum
 
 from typing import Any, Annotated
 from fastapi import (
@@ -23,9 +24,8 @@ from fastapi.responses import (
 )
 from fastapi.exceptions import (
     RequestValidationError,
-)  # , HTTPException as StarletteHTTPException
+)
 from fastapi.encoders import jsonable_encoder
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -40,29 +40,17 @@ from users.views import router as user_router
 from model_views import router as model_router
 from security_views import router as security_router
 
-
-async def verify_token(x_token: Annotated[str, Header()]):
-    if x_token != "fake-super-secret-token":
-        raise HTTPException(status_code=400, detail="X-Token header invalid")
-
-
-async def verify_key(x_key: Annotated[str, Header()]):
-    if x_key != "fake-super-secret-key":
-        raise HTTPException(status_code=400, detail="X-Key header invalid")
-    return x_key
-
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI()
 app.include_router(user_router, tags=["users"])
 app.include_router(model_router, tags=["models"])
 app.include_router(calc_router, tags=["calc"])
-app.include_router(item_router, prefix="/items-new", tags=["items-new"])
+app.include_router(item_router, prefix="/items", tags=["items"])
 app.include_router(totem_router, tags=["totems"])
 app.include_router(sotem_router, tags=["sotems"])
 app.include_router(security_router, tags=["security"])
-
-fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
 
 # it's for first example
@@ -71,39 +59,12 @@ fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"
 # CommonsDep = Annotated[dict, Depends(common_parameters)]
 
 
-# it's for second example
-class CommonQueryParams:
-    def __init__(self, q: str | None = None, skip: int = 0, limit: int = 100):
-        self.q = q
-        self.skip = skip
-        self.limit = limit
-
-
-@app.get("/items-dep/")
-# it's for null and first examples
-# async def read_items(commons: Annotated[dict, Depends(common_parameters)]):
-# async def read_items(commons: CommonsDep):
-# it's for second example
-async def read_items(commons: Annotated[CommonQueryParams, Depends()]):
-    response = {}
-    if commons.q:
-        response.update({"q": commons.q})
-    items = fake_items_db[commons.skip : commons.skip + commons.limit]
-    response.update({"items": items})
-    return response
-    # return commons
-
 
 # it's for first example
 # @app.get("/users-dep/")
 # # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
 # async def read_items(commons: CommonsDep):
 #     return commons
-
-
-@app.get("/items-path-dep/", dependencies=[Depends(verify_token), Depends(verify_key)])
-async def read_items_path_dep():
-    return [{"item": "Foo"}, {"item": "Bar"}]
 
 
 @app.get("/portal")
@@ -172,21 +133,6 @@ async def create_user(user_in: UserIn):
     return user_saved
 
 
-@app.get("/items/")
-async def read_item(skip: int = 0, limit: int = 10, reverse: bool = False):
-    return (
-        fake_items_db[skip : skip + limit][::-1]
-        if reverse
-        else fake_items_db[skip : skip + limit]
-    )
-
-
-# @app.get("/", name="hello123")
-# async def start(args: str = "World"):
-#     names = [name.strip().title() for name in args.split()]
-#     return {"message": f"Hello {', '.join(names)}"}
-
-
 # получение информации из файла
 @app.get("/files/{file_path:path}")
 async def read_file_or_dir(file_path: str):
@@ -195,8 +141,7 @@ async def read_file_or_dir(file_path: str):
             return {"file_path": file_path, "data": f.read(200)}
     elif os.path.isdir(file_path):
         return {"file_path": file_path, "files": os.listdir(file_path)}
-    else:
-        return {"file_path": file_path, "exists": False}
+    return {"file_path": file_path, "exists": False}
 
 
 @app.get(
@@ -281,11 +226,40 @@ async def unicorn_exception_handler(request: Request, exc: UnicornException):
     )
 
 
-@app.get("/unicorns/{name}")
+@app.get("/hellow")
+async def root():
+    # return {"message": "Hello World"}
+    return 545121.34
+
+
+@app.get("/hellow/{name}")
 async def read_unicorn(name: str):
-    if name == "yolo":
+    if not isinstance(name, str):
         raise UnicornException(name=name)
     return {"unicorn_name": name}
+
+
+class ModelName(str, Enum):
+    alexnet = "alexnet"
+    resnet = "resnet"
+    lenet = "lenet"
+
+
+@app.get("/names/", name="hello123")
+async def start(args: str = "World"):
+    names = [name.strip().title() for name in args.split()]
+    return {"message": f"Hello {', '.join(names)}"}
+
+
+@app.get("/models/{model_name}")
+async def get_model(model_name: ModelName):
+    if model_name is ModelName.alexnet:
+        return {"model_name": model_name, "message": "Deep Learning FTW!"}
+
+    if model_name.value == "lenet":
+        return {"model_name": model_name, "message": "LeCNN all the images"}
+
+    return {"model_name": model_name, "message": "Have some residuals"}
 
 
 # @app.exception_handler(StarletteHTTPException)
@@ -310,41 +284,6 @@ async def validation_exception_handler(request, exc):
     return await request_validation_exception_handler(request, exc)
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int):
-    if item_id == 3:
-        # raise HTTPException(status_code=418, detail="Nope! I don't like 3.")
-        raise StarletteHTTPException(status_code=418, detail="Nope! I don't like 3.")
-    return {"item_id": item_id}
-
-
-class OwnerError(Exception):
-    pass
-
-
-data = {
-    "plumbus": {"description": "Freshly pickled plumbus", "owner": "Morty"},
-    "portal-gun": {"description": "Gun to create portals", "owner": "Rick"},
-}
-
-
-def get_username():
-    try:
-        yield "Rick"
-    except OwnerError as e:
-        raise HTTPException(status_code=400, detail=f"Owner error: {e}")
-
-
-@app.get("/items/yield-exc/{item_id}")
-def get_item(item_id: str, username: Annotated[str, Depends(get_username)]):
-    if item_id not in data:
-        raise HTTPException(status_code=404, detail="Item not found")
-    item = data[item_id]
-    if item["owner"] != username:
-        raise OwnerError(username)
-    return item
-
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
@@ -353,17 +292,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-class Item(BaseModel):
-    title: str
-    size: int
-
-
-@app.post("/items/")
-async def create_item(item: Item):
-    return item
-
-
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)
