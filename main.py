@@ -1,4 +1,5 @@
 import os.path
+import re
 import time
 from enum import Enum
 
@@ -44,8 +45,14 @@ from security_views import router as security_router
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
-app = FastAPI()
+app = FastAPI(
+    root_path="/api/v1",
+    # openapi_url='/api/v1/openapi.json',
+)
 app.include_router(user_router, tags=["users"])
 app.include_router(model_router, tags=["models"])
 app.include_router(calc_router, tags=["calc"])
@@ -53,6 +60,9 @@ app.include_router(item_router, prefix="/items", tags=["items"])
 app.include_router(totem_router, tags=["totems"])
 app.include_router(sotem_router, tags=["sotems"])
 app.include_router(security_router, tags=["security"])
+
+# app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1"])  # , "*.example.com"])
 
 
 # it's for first example
@@ -70,11 +80,23 @@ app.include_router(security_router, tags=["security"])
 
 
 @app.middleware("http")
+async def check_name_format(request: Request, call_next):
+    path_parts = request.scope['path'].split('/')
+    if path_parts[-2] == 'hello':
+        if not re.match('^[a-zA-Zа-яА-Я]{2,30}$', path_parts[-1]):
+            return JSONResponse(status_code=400, content={"detail": 'Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$'})
+
+    response = await call_next(request)
+    return response
+
+
+@app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.perf_counter()
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
     response.headers["X-Process-Time"] = str(process_time)
+    response.headers["X-Root-Path"] = request.scope.get("root_path")
     return response
 
 
@@ -245,7 +267,7 @@ async def root():
 
 @app.get("/hello/{name}")
 async def read_unicorn(
-        name: Annotated[str, Path(pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
+        name: Annotated[str, Path()],   # pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
 ):
     if not isinstance(name, str):
         raise UnicornException(name=name)
