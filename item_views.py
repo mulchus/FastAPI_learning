@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Query, Path, Body, HTTPException, Header, Cookie, Depends
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, AfterValidator
 from typing import Annotated
 from uuid import UUID
 
@@ -199,12 +199,12 @@ async def update_item(
 
 @router.get("/")
 def list_items(
-    q: Annotated[list[str], Query(alias="<item-query> instead <q>")] = (
+    q: Annotated[list[str], Query(alias="item-query")] = (  # <item-query> instead <q>
         "default",
         "query",
     )
 ):
-    return [x for x in q] + ["string1", "string^"]
+    return [x for x in q] + ["string1", "string2"]
 
 
 @router.get("/cookie/")
@@ -215,6 +215,11 @@ async def read_cookie_items(ads_id: Annotated[str | None, Cookie()] = None):
 @router.get("/header/")
 async def read_header_items(user_agent: Annotated[str | None, Header()] = None):
     return {"User-Agent": user_agent}
+
+
+@router.get("/book/{book_")
+async def read_cookie_items(ads_id: Annotated[str | None, Cookie()] = None):
+    return {"ads_id": ads_id}
 
 
 @router.get("/latest/")
@@ -247,12 +252,22 @@ async def read_items_path_depends():
     return [{"item": "Foo"}, {"key": "Bar"}]
 
 
+def check_valid_id(item_id: str):
+    prefixes = ("isbn-", "imdb-")
+    if not item_id.startswith(prefixes):
+        raise ValueError(f'Invalid item_id format, it must start with {prefixes}')
+    return item_id
+
+
 @router.get("/{item_id}")  # example: http://127.0.0.1:8000/items-new/1/?q=qwerty
-def read_item(
-    item_id: str,
+def get_item(
+    item_id: Annotated[
+        str,
+        AfterValidator(check_valid_id),
+    ],
     q: Annotated[str, Query(regex="[a-zA-Zйцуке][^0-9]123$")] = None,
 ):
-    if item_id == 'abc':
+    if item_id == 'isbn-abc':
         raise StarletteHTTPException(status_code=418, detail="Nope! I don't like ABC.")
     return {"item_id": item_id, "q": q} if q else {"item_id": item_id}
 
@@ -313,7 +328,7 @@ def get_username():
 
 
 @router.get("/yield-exc/{item_id}")
-def get_item(item_id: str, username: Annotated[str, Depends(get_username)]):
+def get_item_by_username(item_id: str, username: Annotated[str, Depends(get_username)]):
     if item_id not in data:
         raise HTTPException(status_code=404, detail="Item not found")
     item = data[item_id]
