@@ -227,19 +227,19 @@ async def unicorn_exception_handler(request: Request, exc: UnicornException):
     )
 
 
-@app.get("/hellow")
+@app.get("/hello")
 async def root():
     # return {"message": "Hello World"}
     return 545121.34
 
 
-@app.get("/hellow/{name}")
+@app.get("/hello/{name}")
 async def read_unicorn(
-        name: Annotated[str, Path(regex="[a-zA-Zа-яА-Я]$")],
+        name: Annotated[str, Path(pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
 ):
     if not isinstance(name, str):
         raise UnicornException(name=name)
-    return {"massage": f"Hellow, {name.title()}"}
+    return {"massage": f"Hello, {name.title()}"}
 
 
 class ModelName(str, Enum):
