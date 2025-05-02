@@ -1,9 +1,9 @@
 from datetime import datetime, time, timedelta
-from fastapi import APIRouter, Query, Path, Body, HTTPException, Header, Cookie, Depends
-from pydantic import BaseModel, Field, HttpUrl, AfterValidator
-from typing import Annotated
+from typing import Annotated, Any, Generator
 from uuid import UUID
 
+from fastapi import APIRouter, Body, Cookie, Depends, Header, HTTPException, Path, Query
+from pydantic import AfterValidator, BaseModel, Field, HttpUrl
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
@@ -19,20 +19,20 @@ class FirstItem(BaseModel):
 
 
 @router.post("/item_class/")
-async def view_item_class(item: FirstItem):
+async def view_item_class(item: FirstItem) -> FirstItem:
     item.title = item.title.title()
     item.size += 50
     return item
 
 
 @router.put("/dates/{item_id}")
-async def read_items(
+async def read_dates_items(
     item_id: UUID,  # например 6ffefd8e-a018-e811-bbf9-60f67727d806
     start_datetime: Annotated[datetime, Query()],
     end_datetime: Annotated[datetime, Body()],
+    process_after: Annotated[timedelta, Body()],
     repeat_at: Annotated[time | None, Body()] = None,
-    process_after: Annotated[timedelta | None, Body()] = None,
-):
+) -> dict[str, Any]:
     start_process = start_datetime + process_after
     duration = end_datetime - start_process
     return {
@@ -53,65 +53,64 @@ class Image(BaseModel):
 
 class Item(BaseModel):
     name: str
-    description: str | None = Field(
-        default=None,
+    description: str = Field(
+        default="",
         title="The description of the item",
         max_length=15,
         examples=["Its a good item"],
     )
     price: float = Field(
-        gt=0, description="The price must be greater than zero", examples=[35.4]
+        gt=0,
+        description="The price must be greater than zero",
+        examples=[35.4],
     )
-    tax: float | None = Field(default=None, examples=[3.2])
+    tax: float = Field(default=0, examples=[3.2])
     tags: set[str] = set()
     image: list[Image] | None = None
 
     model_config = {"extra": "forbid"}  # запретить иные кроме печечисленных
 
 
-class Offer(BaseModel):
+class ShortOffer(BaseModel):
     name: str
     description: str | None = None
     price: float
+
+
+class Offer(ShortOffer):
     items: list[Item]
 
 
-class ShortOffers(BaseModel):
-    name: str
-    description: str | None = None
-    price: float
-
-
 @router.post("/offers/")
-async def create_offer(offer: Offer) -> Offer:
+async def create_offer(offer: Offer) -> dict[str, Any]:
     offer.price = sum(item.price for item in offer.items)
     rez_offer = offer.model_dump()
-    rez_offer['extra'] = 'extra_field'  # this field ignore in return
+    rez_offer["extra"] = "extra_field"  # this field ignore in return
     return rez_offer
 
 
-@router.post("/short_offers_info/", response_model=ShortOffers)
-async def create_offer(offer: Offer):
+@router.post("/short_offers_info/", response_model=ShortOffer)
+async def create_short_offer(offer: Offer) -> ShortOffer:
     offer.price = sum(item.price for item in offer.items)
-    return offer
+    return ShortOffer(**offer.model_dump())
 
 
 @router.post("/images/multiple/")
-async def create_multiple_images(images: list[Image]):
+async def create_multiple_images(images: list[Image]) -> list[Image]:
     return images
 
 
 @router.post("/index-weights/")
 async def create_index_weights(
-    weights: dict[int, float]  # dict have "int" keys and float values
-):
+    weights: dict[int, float],
+) -> dict[int, float]:
     return weights
 
 
 @router.post("/post/")
-async def create_item(item: Item):
+async def create_item(item: Item) -> Item:
     item.name = item.name.strip().title()
-    item.description = (item.description + ", ") * 3
+    item.description = ((item.description + ", ") * 3).rstrip(", ")
     return item
 
 
@@ -130,7 +129,7 @@ async def update_item(
             deprecated=True,  # отметка, что параметр устарел
         ),
     ] = None,  # regex="^fixedquery$"
-):
+) -> dict[str, Any]:
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
     if item.tax:
@@ -194,7 +193,7 @@ async def update_item_2(
         ),
     ],
     q: str | None = None,
-):
+) -> dict[str, Any]:
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 5).rstrip(", ")
     if item.tax:
@@ -206,72 +205,83 @@ async def update_item_2(
 
 
 @router.put("/put/{item_id}")
-async def update_item(
-    item_id: int, item: Annotated[Item, Body(embed=True)]
-):  # в json добавлен главный уровень item
+async def put_item(
+    item_id: int,
+    item: Annotated[Item, Body(embed=True)],
+) -> dict[str, Any]:  # в json добавлен главный уровень item
     results = {"item_id": item_id, "item": item}
     return results
 
 
 @router.get("/")
 def list_items(
-    q: Annotated[list[str], Query(alias="item-query")] = (  # <item-query> instead <q>
+    q: Annotated[
+        tuple[str, str], Query(alias="item-query"),
+    ] = (  # <item-query> instead <q>
         "default",
         "query",
-    )
-):
+    ),
+) -> list[str]:
     return [x for x in q] + ["string1", "string2"]
 
 
 @router.get("/cookie/")
-async def read_cookie_items(ads_id: Annotated[str | None, Cookie()] = None):
+async def read_cookie_items(
+    ads_id: Annotated[str | None, Cookie()] = None,
+) -> dict[str, str | None]:
     return {"ads_id": ads_id}
 
 
 @router.get("/header/")
-async def read_header_items(user_agent: Annotated[str | None, Header()] = None):
+async def read_header_items(
+    user_agent: Annotated[str | None, Header()] = None,
+) -> dict[str, str | None]:
     return {"User-Agent": user_agent}
 
 
 @router.get("/book/{book_")
-async def read_cookie_items(ads_id: Annotated[str | None, Cookie()] = None):
+async def read_book_items(
+    ads_id: Annotated[str | None, Cookie()] = None,
+) -> dict[str, str | None]:
     return {"ads_id": ads_id}
 
 
 @router.get("/latest/")
 def read_last_item(
     q: Annotated[
-        list[str],
+        tuple[str, str],
         Query(
             title="Query string",
             description="Query string for the items to search in the database that have a good match",
         ),
-    ] = ("foo", "bar")
-):
+    ] = ("foo", "bar"),
+) -> dict[str, Any]:
     return {"item_id": "latest", "q": q}
 
 
-async def verify_token(x_token: Annotated[str, Header()]):
+async def verify_token(x_token: Annotated[str, Header()]) -> None:
     if x_token != "fake_super_secret_token":
         raise HTTPException(status_code=400, detail="X-Token header invalid")
 
 
-async def verify_key(x_key: Annotated[str, Header()]):
+async def verify_key(x_key: Annotated[str, Header()]) -> str:
     if x_key != "fake_super_secret_key":
         raise HTTPException(status_code=400, detail="X-Key header invalid")
     return x_key
 
 
 # get some items with chek toke and key
-@router.get("/items-path-depends/", dependencies=[Depends(verify_token), Depends(verify_key)])
-async def read_items_path_depends():
+@router.get(
+    "/items-path-depends/", dependencies=[Depends(verify_token), Depends(verify_key)],
+)
+async def read_items_path_depends() -> list[dict[str, str]]:
     return [{"item": "Foo"}, {"key": "Bar"}]
 
 
-def check_valid_id(item_id: str):
+def check_valid_id(item_id: str) -> str:
     prefixes = ("isbn-", "imdb-")
     if not item_id.startswith(prefixes):
-        raise ValueError(f'Invalid item_id format, it must start with {prefixes}')
+        raise ValueError(f"Invalid item_id format, it must start with {prefixes}")
     return item_id
 
 
@@ -281,9 +291,9 @@ def get_item(
         str,
         AfterValidator(check_valid_id),
     ],
-    q: Annotated[str, Query(regex="[a-zA-Zйцуке][^0-9]123$")] = None,
-):
-    if item_id == 'isbn-abc':
+    q: Annotated[str | None, Query(regex="[a-zA-Zйцуке][^0-9]123$")] = None,
+) -> dict[str, str]:
+    if item_id == "isbn-abc":
         raise StarletteHTTPException(status_code=418, detail="Nope! I don't like ABC.")
     return {"item_id": item_id, "q": q} if q else {"item_id": item_id}
 
@@ -291,14 +301,16 @@ def get_item(
 @router.get("/var2/{item_id}")  # !! automatically delete '/'
 # example http://127.0.0.1:8000/items-new/var2/1?q=%27asdass%27&short=0
 async def read_item(
-    item_id: str, q: Annotated[str | None, Query()] = "fixedquery", short: bool = False
-):
+    item_id: str,
+    q: Annotated[str | None, Query()] = "fixedquery",
+    short: bool = False,
+) -> dict[str, str]:
     item = {"item_id": item_id}
     if q:
         item.update({"q": q})
     if not short:
         item.update(
-            {"description": "This is an amazing item that has a long description"}
+            {"description": "This is an amazing item that has a long description"},
         )
     return item
 
@@ -316,14 +328,15 @@ class CommonQueryParams:
 # async def read_items(commons: Annotated[dict, Depends(common_parameters)]):
 # async def read_items(commons: CommonsDep):
 # it's for second example
-async def read_items(commons: Annotated[CommonQueryParams, Depends()]):
+async def read_items(
+    commons: Annotated[CommonQueryParams, Depends()],
+) -> dict[str, Any]:
     response = {}
     if commons.q:
         response.update({"q": commons.q})
-    items = fake_items_db[commons.skip : commons.skip + commons.limit]
-    response.update({"items": items})
+    items = fake_items_db[commons.skip: commons.skip + commons.limit]
+    response.update({"items": items})  # type: ignore[dict-item]
     return response
-    # return commons
 
 
 class OwnerError(Exception):
@@ -336,7 +349,7 @@ data = {
 }
 
 
-def get_username():
+def get_username() -> Generator[str, Any, None]:
     try:
         yield "Rick"
     except OwnerError as e:
@@ -344,7 +357,9 @@ def get_username():
 
 
 @router.get("/yield-exc/{item_id}")
-def get_item_by_username(item_id: str, username: Annotated[str, Depends(get_username)]):
+def get_item_by_username(
+    item_id: str, username: Annotated[str, Depends(get_username)],
+) -> dict[str, str]:
     if item_id not in data:
         raise HTTPException(status_code=404, detail="Item not found")
     item = data[item_id]

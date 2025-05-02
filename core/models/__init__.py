@@ -1,10 +1,10 @@
-__all__ = {
-    "Base",
-    "Product",
-}
-
-from .base import Base
-from .product import Product
+# from .base import Base
+# from .product import Product
+#
+# __all__ = {
+#     "Base",
+#     "Product",
+# }
 
 
 # на данном шаге приостановил знакомство, т.к. в видео в куче все. сразу сложно для изучения. видео № 3

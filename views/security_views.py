@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
+
 
 router = APIRouter()
 
@@ -26,7 +28,7 @@ fake_users_db = {
 }
 
 
-def fake_hash_password(password: str):
+def fake_hash_password(password: str) -> str:
     return "fakehashed" + password
 
 
@@ -41,21 +43,14 @@ class UserInDB(User):
     hashed_password: str
 
 
-def get_user(db, username: str):
+def get_user(db: dict[str, dict], username: str) -> UserInDB | None:
     if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+        return UserInDB(**db[username])
+    return None
 
 
-def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInDB:
     user = get_user(fake_users_db, token)
-    return user
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = fake_decode_token(token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,8 +61,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
     print(current_user.disabled)
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -75,7 +70,9 @@ async def get_current_active_user(
 
 
 @router.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> dict[str, str]:
     user_dict = fake_users_db.get(form_data.username)
     if not user_dict:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -89,6 +86,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
 @router.get("/users/me")
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-):
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
     return current_user

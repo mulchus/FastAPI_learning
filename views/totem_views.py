@@ -1,19 +1,20 @@
-from datetime import datetime, time, timedelta
-from fastapi import APIRouter, Query, Path, Body, Header, Cookie, HTTPException, status
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, Field, HttpUrl
-from typing import Annotated, Union
+# from datetime import datetime, time, timedelta
 from enum import Enum
+from typing import Union  # Annotated,
+
+from fastapi import APIRouter, HTTPException, status  # Query, Path, Body, Header, Cookie,
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel  # , Field, HttpUrl
 
 
 router = APIRouter()
 
 
 class Totem(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    price: float | None = None
-    tax: float | None = 10.5  # default value
+    name: str = ""
+    description: str = ""
+    price: float = 0
+    tax: float = 10.5  # default value
     tags: list[str] = []
 
 
@@ -30,26 +31,26 @@ totems = {
     response_model_include={"name", "price", "description", "tags"},
     response_model_exclude_unset=True,
 )
-async def read_totem(totem_id: str):
+async def read_totem(totem_id: str) -> Totem:
     if totem_id not in totems:
         raise HTTPException(status_code=404, detail={"message": "Totem not found"})
-    return totems[totem_id]
+    return Totem(**totems[totem_id])  # type: ignore
 
 
 @router.put("/totems3/{totem_id}", response_model=Totem)
-async def update_totem(totem_id: str, totem: Totem):
+async def update_totem(totem_id: str, totem: Totem) -> Totem:
     update_totem_encoded = jsonable_encoder(totem)
     totems[totem_id] = update_totem_encoded
     print(update_totem_encoded)
     print(totems)
     # return {"success": True, "data": totems}  # not return a dict because response_model = Totem
-    return totems[totem_id]
+    return Totem(**totems[totem_id])  # type: ignore
 
 
 @router.patch("/totems4/{totem_id}", response_model=Totem)
-async def update_totem4(totem_id: str, totem: Totem):
+async def update_totem4(totem_id: str, totem: Totem) -> Totem:
     stored_totem_data = totems[totem_id]
-    stored_totem_model = Totem(**stored_totem_data)
+    stored_totem_model = Totem(**stored_totem_data)  # type: ignore[arg-type]
     print(stored_totem_model)
     update_data = totem.dict(exclude_unset=True)
     print(update_data)
@@ -84,7 +85,7 @@ new_totems = [
     # response_model_exclude={"tax", "tags", "price"},  # don't work
     response_model_exclude_unset=True,  # work
 )
-async def read_totems():  # -> list[Totem]:
+async def read_totems() -> list[dict]:  # -> list[Totem]:
     # return [
     #     Totem(name="Portal Gun", price=42.0),
     #     Totem(name="Plumbus", price=32.0),
@@ -99,12 +100,12 @@ class Tags(Enum):
 
 
 @router.get("/totems/", tags=[Tags.totems])
-async def get_totems():
+async def get_totems() -> list[str]:
     return ["Portal gun", "Plumbus"]
 
 
 @router.get("/users/", tags=[Tags.users], deprecated=True)
-async def read_users():
+async def read_users() -> list[str]:
     return ["Rick", "Morty"]
 
 
@@ -117,10 +118,10 @@ async def read_users():
     # description="Create a totem with all the information,"
     #             " name, description, price, tax and a set of unique tags",
 )
-async def create_totem(totem: Totem):  # -> Totem:
-    """
-    Create a totem with all the information:
+async def create_totem(totem: Totem) -> Totem:
+    """Create a totem with all the information.
 
+    Params:
     - **name**: each totem must have a name
     - **description**: a long description
     - **price**: required
@@ -134,28 +135,28 @@ async def create_totem(totem: Totem):  # -> Totem:
 
 class BaseTotem(BaseModel):
     description: str
-    type: str
+    totem_type: str
 
 
 class CarTotem(BaseTotem):
-    type: str = "car"
+    totem_type: str = "car"
 
 
 class PlaneTotem(BaseTotem):
-    type: str = "plane"
+    totem_type: str = "plane"
     size: int
 
 
 totems2 = {
-    "totem1": {"description": "All my friends drive a low rider", "type": "car"},
+    "totem1": {"description": "All my friends drive a low rider", "totem_type": "car"},
     "totem2": {
         "description": "Music is my aeroplane, it's my aeroplane",
-        "type": "plane",
+        "totem_type": "plane",
         "size": 5,
     },
 }
 
 
 @router.get("/totems2/{totem_id}", response_model=Union[PlaneTotem, CarTotem])
-async def read_totem2_1(totem_id: str):
-    return totems2[totem_id]
+async def read_totem2_1(totem_id: str) -> Totem:
+    return Totem(**totems2[totem_id])  # type: ignore

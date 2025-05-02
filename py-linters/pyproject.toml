@@ -50,10 +50,10 @@ multi_line_output = 3
 include_trailing_comma = true
 lines_after_imports = 2
 known_third_party = []
-known_first_party = ["users", "core"]
+known_first_party = ["users", "core", "views"]
 # Remove app after sorting imports there
 skip_glob = [
-    "*/*.py",
-    "*/users/*.py",
-    "*/core/*.py",
+#    "*/*.py",
+#    "*/users/*.py",
+#    "*/core/*.py",
 ]

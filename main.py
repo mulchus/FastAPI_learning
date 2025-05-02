@@ -35,14 +35,14 @@ from fastapi.exception_handlers import (
 )
 from fastapi.security import OAuth2PasswordBearer
 
-from calc_views import router as calc_router
-from item_views import router as item_router
-from totem_views import router as totem_router
-from sotem_views import router as sotem_router
 from users.views import router as user_router
-from model_views import router as model_router
-from security_views import router as security_router
-from background_tasks import router as background_tasks_router
+from views.calc_views import router as calc_router
+from views.item_views import router as item_router
+from views.totem_views import router as totem_router
+from views.sotem_views import router as sotem_router
+from views.model_views import router as model_router
+from views.security_views import router as security_router
+from views.background_tasks import router as background_tasks_router
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -73,7 +73,6 @@ app.include_router(background_tasks_router, tags=["background_tasks"])
 # CommonsDep = Annotated[dict, Depends(common_parameters)]
 
 
-
 # it's for first example
 # @app.get("/users-dep/")
 # # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
@@ -83,10 +82,13 @@ app.include_router(background_tasks_router, tags=["background_tasks"])
 
 @app.middleware("http")
 async def check_name_format(request: Request, call_next):
-    path_parts = request.scope['path'].split('/')
-    if path_parts[-2] == 'hello':
-        if not re.match('^[a-zA-Zа-яА-Я]{2,30}$', path_parts[-1]):
-            return JSONResponse(status_code=400, content={"detail": 'Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$'})
+    path_parts = request.scope["path"].split("/")
+    if path_parts[-2] == "hello":
+        if not re.match("^[a-zA-Zа-яА-Я]{2,30}$", path_parts[-1]):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$"},
+            )
 
     response = await call_next(request)
     return response
@@ -269,7 +271,7 @@ async def root():
 
 @app.get("/hello/{name}")
 async def read_unicorn(
-        name: Annotated[str, Path()],   # pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
+    name: Annotated[str, Path()],  # pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
 ):
     if not isinstance(name, str):
         raise UnicornException(name=name)
@@ -331,4 +333,5 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)

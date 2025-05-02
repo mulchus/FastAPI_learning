@@ -1,17 +1,12 @@
-"""
-Create
-Read
-Update
-Delete
-"""
+from typing import Any
 
 from users.schemas import User
 
 
-def create_user(user: User) -> dict:
+def create_user(user: User) -> dict[str, Any]:
     user.name = user.name.strip().title()
-    user = user.model_dump()
+    user_dump = user.model_dump()
     return {
         "success": True,
-        "data": user
+        "data": user_dump,
     }
