@@ -308,4 +308,5 @@ async def validation_exception_handler2(request: Request, exc: RequestValidation
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)
+    # running from root directory by command python src/main.py
+    uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)  # , log_config="./src/uvicorn_logging_config.yaml")
