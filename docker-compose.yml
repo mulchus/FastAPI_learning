@@ -1,0 +1,20 @@
+services:
+  py-linters:
+    build:
+      context: ./py-linters/
+    image: fastapi_learning_py_linters:latest
+    volumes:
+      - ./py-linters/pyproject.toml:/opt/linters/pyproject.toml
+      - ./py-linters/poetry.lock:/opt/linters/poetry.lock
+      # mount source code to check a code with linter running inside a container
+      - ./core:/check/core
+      - ./users:/check/users
+      - ./views:/check/views
+      - .main.py:/check
+    command: 'echo Skipped'
+
+  editorconfig-checker:
+    image: mstruebing/editorconfig-checker:v3.0.3
+    volumes:
+      # mount repository top level folder with .editorconfig file and source code to check with editorconfig-checker
+      - ./:/check
