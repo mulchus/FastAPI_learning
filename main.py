@@ -42,6 +42,7 @@ from sotem_views import router as sotem_router
 from users.views import router as user_router
 from model_views import router as model_router
 from security_views import router as security_router
+from background_tasks import router as background_tasks_router
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -60,6 +61,7 @@ app.include_router(item_router, prefix="/items", tags=["items"])
 app.include_router(totem_router, tags=["totems"])
 app.include_router(sotem_router, tags=["sotems"])
 app.include_router(security_router, tags=["security"])
+app.include_router(background_tasks_router, tags=["background_tasks"])
 
 # app.add_middleware(HTTPSRedirectMiddleware)
 # app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1"])  # , "*.example.com"])
