@@ -10,7 +10,6 @@ services:
       - ./core:/check/core
       - ./users:/check/users
       - ./views:/check/views
-#      - .main.py:/check/
     command: 'echo Skipped'
 
   editorconfig-checker:

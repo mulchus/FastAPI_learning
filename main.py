@@ -2,52 +2,28 @@ import os.path
 import re
 import time
 from enum import Enum
+from typing import Annotated, Any
 
-from typing import Any, Annotated
-from fastapi import (
-    FastAPI,
-    Request,
-    Response,
-    status,
-    Form,
-    File,
-    UploadFile,
-    Depends,
-    HTTPException,
-    Header,
-    Query,
-    Path,
-)
-from pydantic import BaseModel, EmailStr
-from fastapi.responses import (
-    JSONResponse,
-    RedirectResponse,
-    HTMLResponse,
-    PlainTextResponse,
-)
-from fastapi.exceptions import (
-    RequestValidationError,
-)
+from fastapi import FastAPI, File, Form, Path, Request, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
-from fastapi.exception_handlers import (
-    http_exception_handler,
-    request_validation_exception_handler,
-)
-from fastapi.security import OAuth2PasswordBearer
-
-from users.views import router as user_router
-from views.calc_views import router as calc_router
-from views.item_views import router as item_router
-from views.totem_views import router as totem_router
-from views.sotem_views import router as sotem_router
-from views.model_views import router as model_router
-from views.security_views import router as security_router
-from views.background_tasks import router as background_tasks_router
-
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from pydantic import BaseModel, EmailStr
+from sqlalchemy import func
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from users.views import router as user_router
+from views.background_tasks import router as background_tasks_router
+from views.calc_views import router as calc_router
+from views.item_views import router as item_router
+from views.model_views import router as model_router
+from views.security_views import router as security_router
+from views.sotem_views import router as sotem_router
+from views.totem_views import router as totem_router
+
 
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI(
@@ -81,7 +57,7 @@ app.include_router(background_tasks_router, tags=["background_tasks"])
 
 
 @app.middleware("http")
-async def check_name_format(request: Request, call_next):
+async def check_name_format(request: Request, call_next: func) -> Response:
     path_parts = request.scope["path"].split("/")
     if path_parts[-2] == "hello":
         if not re.match("^[a-zA-Zа-яА-Я]{2,30}$", path_parts[-1]):
@@ -95,7 +71,7 @@ async def check_name_format(request: Request, call_next):
 
 
 @app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
+async def add_process_time_header(request: Request, call_next: func) -> Response:
     start_time = time.perf_counter()
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
@@ -112,7 +88,7 @@ async def get_portal(teleport: bool = False) -> Response:
 
 
 @app.get("/portal2", response_model=None)  # without Response type check
-async def get_portal(teleport: bool = False) -> Response | dict:
+async def get_portal2(teleport: bool = False) -> Response | dict:
     if teleport:
         return RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     return {"message": "Here's your interdimensional portal."}
@@ -152,11 +128,11 @@ class UserInDB(UserBase):
     hashed_password: str
 
 
-def fake_password_hasher(raw_password: str):
+def fake_password_hasher(raw_password: str) -> str:
     return "supersecret" + raw_password
 
 
-def fake_save_user(user_in: UserIn):
+def fake_save_user(user_in: UserIn) -> UserInDB:
     hashed_password = fake_password_hasher(user_in.password)
     user_in_db = UserInDB(**user_in.model_dump(), hashed_password=hashed_password)
     print(f"User saved! ..not really, hashed_password: {hashed_password}")
@@ -165,14 +141,14 @@ def fake_save_user(user_in: UserIn):
 
 
 @app.post("/user/", response_model=UserOut)
-async def create_user(user_in: UserIn):
+async def create_user(user_in: UserIn) -> UserInDB:
     user_saved = fake_save_user(user_in)
     return user_saved
 
 
 # получение информации из файла
 @app.get("/files/{file_path:path}")
-async def read_file_or_dir(file_path: str):
+async def read_file_or_dir(file_path: str) -> dict[str, Any]:
     if os.path.isfile(file_path):
         with open(file_path, "r") as f:
             return {"file_path": file_path, "data": f.read(200)}
@@ -187,12 +163,12 @@ async def read_file_or_dir(file_path: str):
     status_code=status.HTTP_226_IM_USED,
     response_description="Not Successful Response (Joke)",
 )
-async def read_keyword_weights():
+async def read_keyword_weights() -> dict[str, Any]:
     return {"foo": 2.3, "bar": "3.4"}
 
 
 @app.post("/login/")
-async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]) -> dict[str, str]:
     return {"username": username}
 
 
@@ -200,7 +176,7 @@ async def login(username: Annotated[str, Form()], password: Annotated[str, Form(
 async def create_files(
     # files: Annotated[list[bytes], File()]
     files: Annotated[list[bytes], File(description="Multiple files as bytes")],
-):
+) -> dict[str, list[int]]:
     return {"file_sizes": [len(file) for file in files]}
 
 
@@ -209,7 +185,7 @@ async def create_file(
     file: Annotated[bytes, File()],
     fileb: Annotated[UploadFile, File()],
     token: Annotated[str, Form()],
-):
+) -> dict[str, Any]:
     return {
         "file_size": len(file),
         "token": token,
@@ -221,14 +197,14 @@ async def create_file(
 async def create_upload_files(
     # files: list[UploadFile]
     files: Annotated[
-        list[UploadFile], File(description="Multiple files as UploadFile")
+        list[UploadFile], File(description="Multiple files as UploadFile"),
     ],
-):
+) -> dict[str, list[str]]:
     return {"filenames": [file.filename for file in files]}
 
 
 @app.get("/")
-async def main():
+async def main() -> None:
     content = """
 <body>
 <form action="/files/" enctype="multipart/form-data" method="post">
@@ -250,13 +226,13 @@ async def main():
     return HTMLResponse(content=content)
 
 
-class UnicornException(Exception):
+class UnicornError(Exception):
     def __init__(self, name: str):
         self.name = name
 
 
-@app.exception_handler(UnicornException)
-async def unicorn_exception_handler(request: Request, exc: UnicornException):
+@app.exception_handler(UnicornError)
+async def unicorn_exception_handler(request: Request, exc: UnicornError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"Oops! {exc.name} did something. There goes a rainbow..."},
@@ -264,7 +240,7 @@ async def unicorn_exception_handler(request: Request, exc: UnicornException):
 
 
 @app.get("/hello")
-async def root():
+async def root() -> Any:
     # return {"message": "Hello World"}
     return 545121.34
 
@@ -272,9 +248,9 @@ async def root():
 @app.get("/hello/{name}")
 async def read_unicorn(
     name: Annotated[str, Path()],  # pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
-):
+) -> dict[str, str]:
     if not isinstance(name, str):
-        raise UnicornException(name=name)
+        raise UnicornError(name=name)
     return {"massage": f"Hello, {name.title()}"}
 
 
@@ -285,13 +261,13 @@ class ModelName(str, Enum):
 
 
 @app.get("/names/", name="hello123")
-async def start(args: str = "World"):
+async def start(args: str = "World") -> dict[str, str]:
     names = [name.strip().title() for name in args.split()]
     return {"message": f"Hello {', '.join(names)}"}
 
 
 @app.get("/models/{model_name}")
-async def get_model(model_name: ModelName):
+async def get_model(model_name: ModelName) -> dict[str, str]:
     if model_name is ModelName.alexnet:
         return {"model_name": model_name, "message": "Deep Learning FTW!"}
 
@@ -312,19 +288,19 @@ async def get_model(model_name: ModelName):
 
 
 @app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request, exc):
+async def custom_http_exception_handler(request: Request, exc: HTTPException) -> Response:
     print(f"OMG! An HTTP error!: {repr(exc)}")
     return await http_exception_handler(request, exc)
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> Response:
     print(f"OMG! The client sent invalid data!: {exc}")
     return await request_validation_exception_handler(request, exc)
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler2(request: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
