@@ -1,4 +1,19 @@
 services:
+
+  fastapi:
+    build:
+      context: .
+    image: fastapi_learning:latest
+    volumes:
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./poetry.lock:/app/poetry.lock
+    ports:
+      - 127.0.0.1:8000:8000
+    command: uvicorn --reload --log-config ./src/uvicorn_logging_config.yaml
+    restart: unless-stopped
+
+
   py-linters:
     build:
       context: ./py-linters/
@@ -15,3 +30,15 @@ services:
     volumes:
       # mount repository top level folder with .editorconfig file and source code to check with editorconfig-checker
       - ./:/check
+
+  test:
+    build:
+      context: .
+    image: fastapi_learning:latest
+    volumes:
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./poetry.lock:/app/poetry.lock
+      - ./tests:/app/tests
+    entrypoint: []
+    command: 'echo Skipped'

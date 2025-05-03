@@ -291,7 +291,7 @@ def get_item(
         str,
         AfterValidator(check_valid_id),
     ],
-    q: Annotated[str | None, Query(regex="[a-zA-Zйцуке][^0-9]123$")] = None,
+    q: Annotated[str | None, Query(pattern="[a-zA-Zйцуке][^0-9]123$")] = None,
 ) -> dict[str, str]:
     if item_id == "isbn-abc":
         raise StarletteHTTPException(status_code=418, detail="Nope! I don't like ABC.")

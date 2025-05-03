@@ -99,7 +99,7 @@ class Tags(Enum):
     users = "users"
 
 
-@router.get("/totems/", tags=[Tags.totems])
+@router.get("/totems/", tags=[Tags.totems], operation_id="get_totems_easy")
 async def get_totems() -> list[str]:
     return ["Portal gun", "Plumbus"]
 

@@ -4,8 +4,8 @@ lint: ## Проверяет линтером код в репозитории
 	docker compose run --rm py-linters mypy /check/
 	docker compose run --rm py-linters isort --check-only --settings-path /opt/linters/pyproject.toml /check/
 
-#test: ## Запускает автотесты
-#	docker compose run --rm some-test pytest --reuse-db
+test: ## Запускает автотесты
+	docker compose run --rm test pytest
 #
 #makemigrations: ## Создаёт новые файлы миграций Django ORM
 #	docker compose run --rm django ./manage.py makemigrations
