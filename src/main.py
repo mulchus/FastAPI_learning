@@ -1,16 +1,14 @@
 import os.path
-import re
-import time
 from enum import Enum
 from typing import Annotated, Any
 
-from fastapi import FastAPI, File, Form, Path, Request, Response, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, Path, Request, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from middlewares import middlewares
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import func
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from users.views import router as user_router
@@ -26,6 +24,7 @@ from views.totem_views import router as totem_router
 # app = FastAPI(dependencies=[Depends(verify_token), Depends(verify_key)])  # add path dependencies for all routes
 app = FastAPI(
     root_path="/api/v1",
+    middleware=middlewares,
     # openapi_url='/api/v1/openapi.json',
 )
 app.include_router(user_router, tags=["users"])
@@ -37,45 +36,34 @@ app.include_router(sotem_router, tags=["sotems"])
 app.include_router(security_router, tags=["security"])
 app.include_router(background_tasks_router, tags=["background_tasks"])
 
-# app.add_middleware(HTTPSRedirectMiddleware)
-# app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1"])  # , "*.example.com"])
+
+@app.get("/hello")
+async def root() -> Any:
+    # return {"message": "Hello World"}
+    return 545121.34
 
 
-# it's for first example
-# async def common_parameters(q: str | None = None, skip: int = 0, limit: int = 100):
-#     return {"q": q, "skip": skip, "limit": limit}
-# CommonsDep = Annotated[dict, Depends(common_parameters)]
+@app.get("/hello/{name}")
+async def read_unicorn(
+    name: Annotated[str, Path(pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
+) -> dict[str, str]:
+    if not isinstance(name, str):
+        print('Catch in read_unicorn url')
+        raise UnicornError(name=name)
+    return {"massage": f"Hello, {name.title()}"}
 
 
-# it's for first example
-# @app.get("/users-dep/")
-# # async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
-# async def read_items(commons: CommonsDep):
-#     return commons
+async def common_parameters(q: str | None = None, skip: int = 0, limit: int = 100) -> dict[str, Any]:
+    return {"q": q, "skip": skip, "limit": limit}
 
 
-@app.middleware("http")
-async def check_name_format(request: Request, call_next: func) -> Response:
-    path_parts = request.scope["path"].split("/")
-    if path_parts[-2] == "hello":
-        if not re.match("^[a-zA-Zа-яА-Я]{2,30}$", path_parts[-1]):
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$"},
-            )
-
-    response = await call_next(request)
-    return response
+CommonsDep = Annotated[dict, Depends(common_parameters)]
 
 
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next: func) -> Response:
-    start_time = time.perf_counter()
-    response = await call_next(request)
-    process_time = time.perf_counter() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    response.headers["X-Root-Path"] = request.scope.get("root_path")
-    return response
+@app.get("/users-dep/")
+# async def read_users(commons: Annotated[dict, Depends(common_parameters)]):
+async def read_items(commons: CommonsDep) -> CommonsDep:
+    return commons
 
 
 @app.get("/portal")
@@ -235,21 +223,6 @@ async def unicorn_exception_handler(request: Request, exc: UnicornError) -> JSON
         status_code=418,
         content={"message": f"Oops! {exc.name} did something. There goes a rainbow..."},
     )
-
-
-@app.get("/hello")
-async def root() -> Any:
-    # return {"message": "Hello World"}
-    return 545121.34
-
-
-@app.get("/hello/{name}")
-async def read_unicorn(
-    name: Annotated[str, Path()],  # pattern="^[a-zA-Zа-яА-Я]{2,30}$")],
-) -> dict[str, str]:
-    if not isinstance(name, str):
-        raise UnicornError(name=name)
-    return {"massage": f"Hello, {name.title()}"}
 
 
 class ModelName(str, Enum):
