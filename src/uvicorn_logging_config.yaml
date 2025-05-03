@@ -3,8 +3,10 @@ disable_existing_loggers: False
 
 formatters:
   standard:
+    '()': time_formatter.LocalTimeFormatter
     format: '%(asctime)s %(levelname)s %(message)s'
     datefmt: '%Y-%m-%d %H:%M:%S %Z'
+    tz_name: 'Europe/Moscow'
 
 handlers:
   console:
