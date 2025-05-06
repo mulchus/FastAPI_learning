@@ -1,10 +1,14 @@
 from enum import Enum
 from typing import Any, Union  # Annotated,
 
-from database import PlaneTotemDB, session
+from database import PlaneTotemDB, Session
 from fastapi import APIRouter, HTTPException, status  # Query, Path, Body, Header, Cookie,
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel  # , Field, HttpUrl
+from tools import async_time_calc
+
+
+# from sqlalchemy import desc
 
 
 router = APIRouter()
@@ -118,6 +122,7 @@ async def read_users() -> list[str]:
     # description="Create a totem with all the information,"
     #             " name, description, price, tax and a set of unique tags",
 )
+@async_time_calc
 async def create_totem(totem: Totem) -> dict[str, str | Any]:
     """Create a totem with all the information.
 
@@ -128,21 +133,25 @@ async def create_totem(totem: Totem) -> dict[str, str | Any]:
     - **tax**: if the item doesn't have tax, you can omit this
     - **tags**: a set of unique tag strings for this totem
     """
-    new_plane_totem = PlaneTotemDB(
-        **totem.model_dump(exclude={'tags'}),
-        # name=totem.name,
-        # description=totem.description,
-        # price=totem.price,
-        # tax=totem.tax,
-        # tags=totem.tags,
-    )
+    with Session(autoflush=True) as session:
+        new_plane_totem = PlaneTotemDB(
+            **totem.model_dump(exclude={'tags'}),
+        )
+        session.add(new_plane_totem)
+        # эксперименты с настройкой autoflush и измерением времени передачи одного или всех значений
+        # спойлер: время выполнения ручки практически одинаково в обоих случаяъ
+        # getting_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
+        getting_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
+        print(f'getting_new_plane_totem {getting_new_plane_totem.__dict__}')
+        session.commit()
+        # getting2_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
+        getting2_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
+        print(f'getting2_new_plane_totem {getting2_new_plane_totem.__dict__}')
 
-    session.add(new_plane_totem)
-    session.commit()
-    return {
-        "message": "plane_totem created",
-        "totem": totem.model_dump(),
-    }
+        return {
+            "message": "plane_totem created",
+            "totem": totem.model_dump(),
+        }
 
 
 class BaseTotem(BaseModel):

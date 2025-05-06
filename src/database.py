@@ -6,8 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 env_settings: AppEnvSettings = AppEnvSettings()
 engine = create_engine(str(env_settings.POSTGRES_DSN))
 
-Session = sessionmaker(bind=engine)
-session = Session()
+Session = sessionmaker(autoflush=False, bind=engine)
 
 
 class DBModel(DeclarativeBase):
