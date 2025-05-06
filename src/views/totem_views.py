@@ -5,7 +5,7 @@ from database import PlaneTotemDB, Session
 from fastapi import APIRouter, HTTPException, status  # Query, Path, Body, Header, Cookie,
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel  # , Field, HttpUrl
-from sqlalchemy import desc
+from sqlalchemy import desc, update
 from tools import async_time_calc
 
 
@@ -27,6 +27,47 @@ totems = {
 }
 
 
+@router.post(
+    "/totems/",
+    # response_model=Totem,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a totem, yeah",
+    response_description="The created totem",
+    # description="Create a totem with all the information,"
+    #             " name, description, price, tax and a set of unique tags",
+)
+@async_time_calc
+async def create_totem(totem: Totem) -> dict[str, str | Any]:
+    """Create a totem with all the information.
+
+    Params:
+    - **name**: each totem must have a name
+    - **description**: a long description
+    - **price**: required
+    - **tax**: if the item doesn't have tax, you can omit this
+    - **tags**: a set of unique tag strings for this totem
+    """
+    with Session(autoflush=True) as session:
+        new_plane_totem = PlaneTotemDB(
+            **totem.model_dump(exclude={'tags'}),
+        )
+        session.add(new_plane_totem)
+        # эксперименты с настройкой autoflush и измерением времени передачи одного или всех значений
+        # спойлер: время выполнения ручки практически одинаково в обоих случаяъ
+        # getting_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
+        getting_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
+        print(f'getting_new_plane_totem {getting_new_plane_totem.__dict__}')
+        session.commit()
+        # getting2_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
+        getting2_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
+        print(f'getting2_new_plane_totem {getting2_new_plane_totem.__dict__}')
+
+        return {
+            "message": "plane_totem created",
+            "totem": totem.model_dump(),
+        }
+
+
 @router.get(
     "/totems/{totem_name}",
     response_model=Totem,
@@ -42,14 +83,26 @@ async def get_totem(totem_name: str) -> Totem:
         return totem
 
 
-@router.put("/totems3/{totem_id}", response_model=Totem)
-async def update_totem(totem_id: str, totem: Totem) -> Totem:
-    update_totem_encoded = jsonable_encoder(totem)
-    totems[totem_id] = update_totem_encoded
-    print(update_totem_encoded)
-    print(totems)
-    # return {"success": True, "data": totems}  # not return a dict because response_model = Totem
-    return Totem(**totems[totem_id])  # type: ignore
+@router.put(
+    "/totems/{totem_id}",
+    # response_model=Totem,
+)
+async def update_totem(totem_id: str, totem: Totem) -> dict[str, str | Any]:
+    with Session() as session:
+        # totem_from_db = session.query(PlaneTotemDB).filter(PlaneTotemDB.id == totem_id).first()
+        # if not totem_from_db:
+        #     raise HTTPException(status_code=404, detail={"message": f"Totem with id {totem_id} not found"})
+
+        # проверка наличия объекта через запрос на обновление
+        stmt = update(PlaneTotemDB).filter(PlaneTotemDB.id == totem_id).values(totem.model_dump(exclude={'tags'}))
+        result = session.execute(stmt)
+        if not result.rowcount:  # если нет ни одной обновленной строки, значит объектов не существует
+            raise HTTPException(status_code=404, detail={"message": f"Totem with id {totem_id} not found"})
+        session.commit()
+        return {
+            "message": "plane_totem updated",
+            "totem": totem,
+        }
 
 
 @router.patch("/totems4/{totem_id}", response_model=Totem)
@@ -112,47 +165,6 @@ async def get_totems() -> list[str]:
 @router.get("/users/", tags=[Tags.users], deprecated=True)
 async def read_users() -> list[str]:
     return ["Rick", "Morty"]
-
-
-@router.post(
-    "/totems/",
-    # response_model=Totem,
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a totem, yeah",
-    response_description="The created totem",
-    # description="Create a totem with all the information,"
-    #             " name, description, price, tax and a set of unique tags",
-)
-@async_time_calc
-async def create_totem(totem: Totem) -> dict[str, str | Any]:
-    """Create a totem with all the information.
-
-    Params:
-    - **name**: each totem must have a name
-    - **description**: a long description
-    - **price**: required
-    - **tax**: if the item doesn't have tax, you can omit this
-    - **tags**: a set of unique tag strings for this totem
-    """
-    with Session(autoflush=True) as session:
-        new_plane_totem = PlaneTotemDB(
-            **totem.model_dump(exclude={'tags'}),
-        )
-        session.add(new_plane_totem)
-        # эксперименты с настройкой autoflush и измерением времени передачи одного или всех значений
-        # спойлер: время выполнения ручки практически одинаково в обоих случаяъ
-        # getting_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
-        getting_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
-        print(f'getting_new_plane_totem {getting_new_plane_totem.__dict__}')
-        session.commit()
-        # getting2_new_plane_totem = session.query(PlaneTotemDB).order_by(desc(PlaneTotemDB.id)).first()
-        getting2_new_plane_totem = session.query(PlaneTotemDB).all()[-1]
-        print(f'getting2_new_plane_totem {getting2_new_plane_totem.__dict__}')
-
-        return {
-            "message": "plane_totem created",
-            "totem": totem.model_dump(),
-        }
 
 
 class BaseTotem(BaseModel):
