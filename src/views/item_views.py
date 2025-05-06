@@ -2,8 +2,10 @@ from datetime import datetime, time, timedelta
 from typing import Annotated, Any, Generator
 from uuid import UUID
 
+from database import get_aioredis
 from fastapi import APIRouter, Body, Cookie, Depends, Header, HTTPException, Path, Query
 from pydantic import AfterValidator, BaseModel, Field, HttpUrl
+from redis import Redis  # type: ignore[import-untyped]
 
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
@@ -106,11 +108,40 @@ async def create_index_weights(
     return weights
 
 
-@router.post("/post/")
-async def create_item(item: Item) -> Item:
+@router.post("/create_redis_item/")
+async def create_redis_item(item: Item, redis: Redis = Depends(get_aioredis)) -> dict[str, Any]:  # noqa B008
     item.name = item.name.strip().title()
     item.description = ((item.description + ", ") * 3).rstrip(", ")
-    return item
+    await redis.set(item.name, item.price)
+    return {
+        "status": "ok",
+        item.name: item.price,
+    }
+
+
+@router.get("/get_redis_item/{item_key}")
+async def get_redis_item(item_key: str, redis: Redis = Depends(get_aioredis)) -> dict[str, Any]:  # noqa B008
+    value = await redis.get(item_key)
+    if not value:
+        raise HTTPException(status_code=404, detail=f"Key {item_key} is absent.")
+    return {
+        "status": "ok",
+        item_key: value,
+    }
+
+
+@router.delete("/delete_redis_item/")
+async def pop_redis_item(item_key: str, redis: Redis = Depends(get_aioredis)) -> dict[str, Any]:  # noqa B008
+    value = await redis.get(item_key)
+    if not value:
+        raise HTTPException(status_code=404, detail=f"Key {item_key} is absent.")
+    print(f"Value for '{item_key}': {value}")
+    await redis.delete(item_key)
+    print(f"Key '{item_key}' has been deleted.")
+    return {
+        "status": "delete",
+        item_key: value,
+    }
 
 
 @router.put("/update/{item_id}")
