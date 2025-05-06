@@ -5,10 +5,8 @@ from database import PlaneTotemDB, Session
 from fastapi import APIRouter, HTTPException, status  # Query, Path, Body, Header, Cookie,
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel  # , Field, HttpUrl
+from sqlalchemy import desc
 from tools import async_time_calc
-
-
-# from sqlalchemy import desc
 
 
 router = APIRouter()
@@ -30,15 +28,18 @@ totems = {
 
 
 @router.get(
-    "/totems/{totem_id}",
+    "/totems/{totem_name}",
     response_model=Totem,
     response_model_include={"name", "price", "description", "tags"},
     response_model_exclude_unset=True,
 )
-async def read_totem(totem_id: str) -> Totem:
-    if totem_id not in totems:
-        raise HTTPException(status_code=404, detail={"message": "Totem not found"})
-    return Totem(**totems[totem_id])  # type: ignore
+async def get_totem(totem_name: str) -> Totem:
+    with Session() as session:
+        totem = session.query(PlaneTotemDB).filter(PlaneTotemDB.name == totem_name).\
+            order_by(desc(PlaneTotemDB.id)).first()
+        if not totem:
+            raise HTTPException(status_code=404, detail={"message": "Totem not found"})
+        return totem
 
 
 @router.put("/totems3/{totem_id}", response_model=Totem)
