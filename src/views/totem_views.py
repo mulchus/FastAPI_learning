@@ -1,7 +1,7 @@
-# from datetime import datetime, time, timedelta
 from enum import Enum
-from typing import Union  # Annotated,
+from typing import Any, Union  # Annotated,
 
+from database import PlaneTotemDB, session
 from fastapi import APIRouter, HTTPException, status  # Query, Path, Body, Header, Cookie,
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel  # , Field, HttpUrl
@@ -111,14 +111,14 @@ async def read_users() -> list[str]:
 
 @router.post(
     "/totems/",
-    response_model=Totem,
+    # response_model=Totem,
     status_code=status.HTTP_201_CREATED,
     summary="Create a totem, yeah",
     response_description="The created totem",
     # description="Create a totem with all the information,"
     #             " name, description, price, tax and a set of unique tags",
 )
-async def create_totem(totem: Totem) -> Totem:
+async def create_totem(totem: Totem) -> dict[str, str | Any]:
     """Create a totem with all the information.
 
     Params:
@@ -128,9 +128,21 @@ async def create_totem(totem: Totem) -> Totem:
     - **tax**: if the item doesn't have tax, you can omit this
     - **tags**: a set of unique tag strings for this totem
     """
-    totem.price += totem.tax
-    return totem
-    # return {"success": True, "data": totem}  # raise exception ResponseValidationError
+    new_plane_totem = PlaneTotemDB(
+        **totem.model_dump(exclude={'tags'}),
+        # name=totem.name,
+        # description=totem.description,
+        # price=totem.price,
+        # tax=totem.tax,
+        # tags=totem.tags,
+    )
+
+    session.add(new_plane_totem)
+    session.commit()
+    return {
+        "message": "plane_totem created",
+        "totem": totem.model_dump(),
+    }
 
 
 class BaseTotem(BaseModel):

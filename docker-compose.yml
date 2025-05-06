@@ -10,9 +10,24 @@ services:
       - ./poetry.lock:/app/poetry.lock
     ports:
       - 127.0.0.1:8000:8000
+    environment:
+      POSTGRES_DSN: postgresql://mulch:supersecret@postgres:5432/mulch
+    depends_on:
+      - postgres
     command: uvicorn --reload --log-config ./src/uvicorn_logging_config.yaml
     restart: unless-stopped
 
+  postgres:
+    image: postgres:14.8  # 14 is a minimal Postgres version supported by dev and prod installations
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_USER: mulch
+      POSTGRES_DB: mulch
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   py-linters:
     build:
@@ -42,3 +57,6 @@ services:
       - ./tests:/app/tests
     entrypoint: []
     command: 'echo Skipped'
+
+volumes:
+  db_data:
