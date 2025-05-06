@@ -1,4 +1,6 @@
 import exceptions
+from database import DBModel, engine
+from env_settings import AppEnvSettings
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from middlewares import middlewares
@@ -57,7 +59,9 @@ def create_app(
 
 
 def main() -> FastAPI:
+    env_settings: AppEnvSettings = AppEnvSettings()
     app = create_app(
-        debug=True,
+        debug=env_settings.FASTAPI_DEBUG,
     )
+    DBModel.metadata.create_all(engine)
     return app
