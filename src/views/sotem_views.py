@@ -2,7 +2,8 @@ from datetime import datetime
 
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+from typing_extensions import Self
 
 
 fake_db = {}
@@ -14,6 +15,12 @@ class Sotem(BaseModel):
     title: str
     timestamp: datetime
     description: str | None = None
+
+    @model_validator(mode='after')
+    def verify_title(self) -> Self:
+        if self.title == 'string':
+            raise ValueError("Title don't may be 'string'")
+        return self
 
 
 @router.put("/sotems/{id}")

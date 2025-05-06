@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Cookie, Depends, Header, HTTPException, Path, Query
 from pydantic import AfterValidator, BaseModel, Field, HttpUrl
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
@@ -294,7 +293,7 @@ def get_item(
     q: Annotated[str | None, Query(pattern="[a-zA-Zйцуке][^0-9]123$")] = None,
 ) -> dict[str, str]:
     if item_id == "isbn-abc":
-        raise StarletteHTTPException(status_code=418, detail="Nope! I don't like ABC.")
+        raise HTTPException(status_code=418, detail="Nope! I don't like ABC.")
     return {"item_id": item_id, "q": q} if q else {"item_id": item_id}
 
 
