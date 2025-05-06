@@ -1,6 +1,7 @@
+from typing import AsyncGenerator
+
 import redis  # type: ignore[import-untyped]
 from env_settings import AppEnvSettings
-from redis import Redis
 from redis import asyncio as aioredis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
@@ -35,5 +36,9 @@ sync_redis = redis.Redis(
 )
 
 
-async def get_aioredis() -> Redis:
-    return await aioredis.from_url("redis://redis:6379")
+async def get_aioredis() -> AsyncGenerator:
+    redis_engine = await aioredis.from_url("redis://redis:6379")
+    try:
+        yield redis_engine
+    finally:
+        await redis_engine.close()
