@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from middlewares import middlewares
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.staticfiles import StaticFiles
 from version import __version__
 
 from users.views import router as user_router
@@ -54,6 +55,8 @@ def create_app(
     app.exception_handler(RequestValidationError)(exceptions.validation_exception_handler)
     app.exception_handler(RequestValidationError)(exceptions.validation_exception_handler2)
     app.exception_handler(exceptions.UnicornError)(exceptions.unicorn_exception_handler)
+
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
     return app
 

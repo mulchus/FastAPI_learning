@@ -32,6 +32,8 @@ RUN poetry install --no-ansi
 COPY src src
 COPY tests tests
 
+RUN mkdir 'static'
+
 ENV \
     UVICORN_PORT="8000" \
     UVICORN_HOST="0.0.0.0" \
