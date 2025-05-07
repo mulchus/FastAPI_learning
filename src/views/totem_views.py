@@ -8,8 +8,11 @@ from pydantic import BaseModel  # , Field, HttpUrl
 from sqlalchemy import desc, update
 from tools import async_time_calc
 
+from views.sotem_views import router as sotem_router
+
 
 router = APIRouter()
+router.include_router(sotem_router, prefix='/sotem')
 
 
 class Totem(BaseModel):

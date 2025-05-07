@@ -36,7 +36,7 @@ def create_app(
     app.include_router(calc_router, tags=["calc"])
     app.include_router(item_router, prefix="/items", tags=["items"])
     app.include_router(totem_router, tags=["totems"])
-    app.include_router(sotem_router, tags=["sotems"])
+    app.include_router(sotem_router, tags=["sotems"], deprecated=True)  # reinclude in totems, see totems router
     app.include_router(security_router, tags=["security"])
     app.include_router(background_tasks_router, tags=["background_tasks"])
     app.include_router(other_views_router, tags=["others"])
