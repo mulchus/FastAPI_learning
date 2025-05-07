@@ -2,7 +2,7 @@ import re
 import time
 from typing import Callable
 
-from fastapi import Request, Response
+from fastapi import Request, Response  # , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 # from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
@@ -19,6 +19,12 @@ async def check_name_format(request: Request, call_next: Callable) -> Response:
                 status_code=400,
                 content={"detail": "Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$"},
             )
+
+            # this make traceback and 500
+            # raise HTTPException(
+            #     status_code=400,
+            #     detail={"message": "Name must be in regex ^[a-zA-Zа-яА-Я]{2,30}$"},
+            # )
     response = await call_next(request)
     return response
 

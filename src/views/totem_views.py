@@ -161,7 +161,8 @@ class Tags(Enum):
 
 
 @router.get("/totems/", tags=[Tags.totems], operation_id="get_totems_easy")
-async def get_totems() -> list[str]:
+async def get_totems(param1: str) -> list[str]:
+    # query param1 is required
     return ["Portal gun", "Plumbus"]
 
 
