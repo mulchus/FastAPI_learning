@@ -32,7 +32,8 @@ RUN poetry install --no-ansi
 COPY src src
 COPY tests tests
 
-RUN mkdir 'static'
+RUN mkdir -p static
+RUN echo  "Hello!" > static/hello.txt
 
 ENV \
     UVICORN_PORT="8000" \

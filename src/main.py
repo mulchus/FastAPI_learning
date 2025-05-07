@@ -3,9 +3,9 @@ from database import DBModel, engine
 from env_settings import AppEnvSettings
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
 from middlewares import middlewares
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.staticfiles import StaticFiles
 from version import __version__
 
 from users.views import router as user_router
