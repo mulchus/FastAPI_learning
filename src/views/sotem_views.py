@@ -23,14 +23,16 @@ class Sotem(BaseModel):
         return self
 
 
-@router.put("/sotems/{id}")
-def update_sotem(sotem_id: str, sotem: Sotem) -> Sotem:
-    # не ясно зачем!!! если хэндлер все равно возвращает json
+@router.put("/sotems/{sotem_id}/{ext_value}")
+def update_sotem(ext_value: int, sotem_id: str, sotem: Sotem) -> Sotem:
+    print(f'{ext_value=} ')
+
     json_compatible_item_data = jsonable_encoder(sotem)
-    fake_db[sotem_id] = json_compatible_item_data
     print(sotem)
     print(json_compatible_item_data)
-    # fake_db[sotem_id] = sotem
+
+    # fake_db[sotem_id] = json_compatible_item_data
+    fake_db[sotem_id] = sotem
     # return fake_db
-    # return fake_db[sotem_id]
-    return sotem
+    return fake_db[sotem_id]  # in DB saved as Sotem instance
+    # return sotem
