@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Annotated, Any
 
 from exceptions import UnicornError
-from fastapi import APIRouter, Depends, File, Form, Path, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Path, Request, Response, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, EmailStr
 
@@ -12,8 +12,8 @@ router = APIRouter()
 
 
 @router.get("/hello")
-async def root() -> Any:
-    return {"message": "Hello World"}
+async def root(request: Request) -> Any:
+    return {"message": f"Hello World from user ip {request.client.host if request.client else "unknown"}"}
     # return 545121.34
 
 
