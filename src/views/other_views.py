@@ -13,7 +13,12 @@ router = APIRouter()
 
 @router.get("/hello")
 async def root(request: Request) -> Any:
-    return {"message": f"Hello World from user ip {request.client.host if request.client else "unknown"}"}
+    x_forwarded_for = request.headers.get('x-forwarded-for')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0]
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+    return {"message": f"Hello World from client ip {client_ip}"}
     # return 545121.34
 
 
